@@ -13,4 +13,6 @@ logs/
 .wrangler/
 .cache/
 dist/
-.work-backups/
+
+AGENTS.md
+CLAUDE.md
