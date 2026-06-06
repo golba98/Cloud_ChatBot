@@ -5,5 +5,11 @@
 # Dependencies
 node_modules/
 
-# Cloudflare Wrangler local directory
+# Logs
+*.log
+logs/
+
+# Build, cache and cloudflare local directory
 .wrangler/
+.cache/
+dist/

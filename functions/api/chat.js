@@ -3,15 +3,43 @@
  * Cloudflare Pages Function serverless API route for secure AI completion.
  */
 
+export async function onRequest(context) {
+  const { request } = context;
+
+  // Accept POST requests only
+  if (request.method !== 'POST') {
+    return new Response(
+      JSON.stringify({ error: 'Method Not Allowed. This endpoint only accepts POST requests.' }),
+      {
+        status: 405,
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Allow': 'POST'
+        }
+      }
+    );
+  }
+
+  return onRequestPost(context);
+}
+
 export async function onRequestPost(context) {
   const { request, env } = context;
 
-  // 1. Basic security headers for JSON response
+  // Basic security headers for JSON response
   const headers = new Headers({
     'Content-Type': 'application/json; charset=utf-8',
   });
 
   try {
+    // 1. Accept POST requests only (Double safety check)
+    if (request.method !== 'POST') {
+      return new Response(
+        JSON.stringify({ error: 'Method Not Allowed. This endpoint only accepts POST requests.' }),
+        { status: 405, headers: { ...headers, 'Allow': 'POST' } }
+      );
+    }
+
     // 2. Parse and validate JSON payload
     let body;
     try {
@@ -86,7 +114,7 @@ export async function onRequestPost(context) {
           ],
         });
 
-        // Workers AI responds with { response: "..." }
+        // Workers AI responds with { response: "..." } or nested result
         const reply = aiResponse.response || (aiResponse.result && aiResponse.result.response);
 
         if (!reply) {
@@ -119,7 +147,7 @@ export async function onRequestPost(context) {
       }
 
       // Default model for OpenAI
-      const model = env.OPENAI_MODEL || 'gpt-5.4-mini';
+      const model = env.OPENAI_MODEL || 'gpt-4o-mini';
 
       try {
         const openAiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
