@@ -1,9 +1,11 @@
 const MAX_MESSAGE_LENGTH = 2000;
 const MAX_HISTORY_MESSAGES = 10;
+const AGE_GATE_KEY = "maya-age-confirmed";
+
 const INITIAL_MESSAGES = [
   {
     role: "received",
-    text: "Hey you. I'm Maya. Tell me what kind of vibe you want tonight, and we'll keep it warm, playful, and fully consensual.",
+    text: "Hey, I'm Maya. Before we start, tell me the vibe you want tonight — sweet, teasing, romantic, or playful. We'll keep it adult, consensual, and at your pace.",
   },
 ];
 
@@ -22,20 +24,28 @@ const closeErrorBtn = document.getElementById("close-error-btn");
 const sidebarTime = document.getElementById("sidebar-time");
 const consentCheckbox = document.getElementById("adult-confirmation");
 const consentHint = document.getElementById("consent-hint");
+const ageGate = document.getElementById("age-gate");
+const ageGateConfirmBtn = document.getElementById("age-gate-confirm");
 
 document.addEventListener("DOMContentLoaded", () => {
   chatForm.addEventListener("submit", handleSubmit);
   messageInput.addEventListener("keydown", handleKeyDown);
   messageInput.addEventListener("input", handleInput);
-  clearBtn.addEventListener("click", resetChat);
+  clearBtn.addEventListener("click", () => resetChat(true));
   closeErrorBtn.addEventListener("click", hideError);
   consentCheckbox.addEventListener("change", handleConsentChange);
+  ageGateConfirmBtn.addEventListener("click", confirmAgeGate);
 
   setSidebarTime();
   resetChat();
   updateCharacterCounter();
-  updateConsentHint();
-  messageInput.focus();
+
+  if (localStorage.getItem(AGE_GATE_KEY) === "true") {
+    hideAgeGate();
+    consentCheckbox.checked = true;
+    updateConsentHint();
+    messageInput.focus();
+  }
 });
 
 function handleInput() {
@@ -120,7 +130,14 @@ async function handleSubmit(event) {
   }
 }
 
-function resetChat() {
+function resetChat(clearGate = false) {
+  if (clearGate) {
+    localStorage.removeItem(AGE_GATE_KEY);
+    consentCheckbox.checked = false;
+    updateConsentHint();
+    showAgeGate();
+  }
+
   hideError();
   conversationHistory = [];
   chatMessages.textContent = "";
@@ -133,6 +150,22 @@ function resetChat() {
   clearComposer();
   setWaiting(false);
   scrollToLatest();
+}
+
+function confirmAgeGate() {
+  localStorage.setItem(AGE_GATE_KEY, "true");
+  hideAgeGate();
+  consentCheckbox.checked = true;
+  updateConsentHint();
+  messageInput.focus();
+}
+
+function hideAgeGate() {
+  ageGate.classList.add("hidden");
+}
+
+function showAgeGate() {
+  ageGate.classList.remove("hidden");
 }
 
 function appendDateSeparator(label) {
