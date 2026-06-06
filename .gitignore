@@ -1,0 +1,9 @@
+# Environment variables
+.env
+.dev.vars
+
+# Dependencies
+node_modules/
+
+# Cloudflare Wrangler local directory
+.wrangler/
