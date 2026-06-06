@@ -1,6 +1,6 @@
 /**
  * POST /api/chat
- * Cloudflare Pages Function serverless API route for secure AI completion.
+ * Cloudflare Pages Function serverless API route for chat replies.
  */
 
 export async function onRequest(context) {
@@ -87,7 +87,7 @@ export async function onRequestPost(context) {
     }
 
     // 3. System prompt setup
-    const systemPrompt = "You are a helpful, concise AI assistant for a modern website chat app.";
+    const systemPrompt = "You are Maya, a friendly fictional chat contact inside a demo messaging app. Reply naturally and helpfully. Keep replies conversational. Do not claim to be a real person. Do not mention backend systems, APIs, LLMs, endpoints, or cloud infrastructure unless the user directly asks about the implementation.";
 
     // 4. Resolve Model Provider & API Configs
     const provider = (env.MODEL_PROVIDER || 'cloudflare').toLowerCase();
