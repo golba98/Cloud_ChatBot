@@ -1,12 +1,14 @@
 const MAX_MESSAGE_LENGTH = 2000;
+const MAX_HISTORY_MESSAGES = 10;
 const INITIAL_MESSAGES = [
   {
     role: "received",
-    text: "Hey, I'm here. Send me a message.",
+    text: "Hey you. I'm Maya. Tell me what kind of vibe you want tonight, and we'll keep it warm, playful, and fully consensual.",
   },
 ];
 
 let isWaiting = false;
+let conversationHistory = [];
 
 const chatMessages = document.getElementById("chat-messages");
 const chatForm = document.getElementById("chat-form");
@@ -18,6 +20,8 @@ const errorContainer = document.getElementById("error-container");
 const errorText = document.getElementById("error-text");
 const closeErrorBtn = document.getElementById("close-error-btn");
 const sidebarTime = document.getElementById("sidebar-time");
+const consentCheckbox = document.getElementById("adult-confirmation");
+const consentHint = document.getElementById("consent-hint");
 
 document.addEventListener("DOMContentLoaded", () => {
   chatForm.addEventListener("submit", handleSubmit);
@@ -25,16 +29,24 @@ document.addEventListener("DOMContentLoaded", () => {
   messageInput.addEventListener("input", handleInput);
   clearBtn.addEventListener("click", resetChat);
   closeErrorBtn.addEventListener("click", hideError);
+  consentCheckbox.addEventListener("change", handleConsentChange);
 
   setSidebarTime();
   resetChat();
   updateCharacterCounter();
+  updateConsentHint();
   messageInput.focus();
 });
 
 function handleInput() {
+  hideError();
   updateCharacterCounter();
   resizeInput();
+}
+
+function handleConsentChange() {
+  hideError();
+  updateConsentHint();
 }
 
 function handleKeyDown(event) {
@@ -52,6 +64,12 @@ async function handleSubmit(event) {
   }
 
   const message = messageInput.value.trim();
+
+  if (!consentCheckbox.checked) {
+    showError("Confirm you are 18+ and want a consensual adult chat before sending.");
+    consentCheckbox.focus();
+    return;
+  }
 
   if (!message) {
     return;
@@ -76,7 +94,11 @@ async function handleSubmit(event) {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ message }),
+      body: JSON.stringify({
+        message,
+        adultConfirmed: consentCheckbox.checked,
+        history: getRecentHistory(),
+      }),
     });
 
     const data = await response.json().catch(() => ({}));
@@ -86,7 +108,7 @@ async function handleSubmit(event) {
       throw new Error(data.error || "Message could not be sent.");
     }
 
-    appendMessage("received", data.reply || "I did not get that. Try sending it again.");
+    appendMessage("received", data.reply || "Mm, I missed that. Try sending it again.");
   } catch (error) {
     removeElement(typingIndicator);
     console.error("Message request failed:", error);
@@ -100,8 +122,9 @@ async function handleSubmit(event) {
 
 function resetChat() {
   hideError();
+  conversationHistory = [];
   chatMessages.textContent = "";
-  appendDateSeparator("Today");
+  appendDateSeparator("Tonight");
 
   INITIAL_MESSAGES.forEach((message) => {
     appendMessage(message.role, message.text);
@@ -140,6 +163,7 @@ function appendMessage(role, text) {
   message.appendChild(bubble);
   chatMessages.appendChild(message);
 
+  trackHistory(role, text);
   scrollToLatest();
 }
 
@@ -149,7 +173,7 @@ function appendTypingIndicator() {
 
   const bubble = document.createElement("div");
   bubble.className = "bubble typing-bubble";
-  bubble.setAttribute("aria-label", "Maya is typing");
+  bubble.setAttribute("aria-label", "Maya is composing a reply");
 
   const dots = document.createElement("span");
   dots.className = "typing-dots";
@@ -164,6 +188,27 @@ function appendTypingIndicator() {
   chatMessages.appendChild(message);
 
   return message;
+}
+
+function trackHistory(role, text) {
+  const normalizedRole = role === "sent" ? "user" : role === "received" ? "assistant" : null;
+
+  if (!normalizedRole) {
+    return;
+  }
+
+  conversationHistory.push({
+    role: normalizedRole,
+    content: text,
+  });
+
+  if (conversationHistory.length > MAX_HISTORY_MESSAGES) {
+    conversationHistory = conversationHistory.slice(-MAX_HISTORY_MESSAGES);
+  }
+}
+
+function getRecentHistory() {
+  return conversationHistory.slice(-MAX_HISTORY_MESSAGES);
 }
 
 function removeElement(element) {
@@ -189,6 +234,12 @@ function updateCharacterCounter() {
 
   charCounter.classList.toggle("warning", length > MAX_MESSAGE_LENGTH * 0.9 && length < MAX_MESSAGE_LENGTH);
   charCounter.classList.toggle("limit", length >= MAX_MESSAGE_LENGTH);
+}
+
+function updateConsentHint() {
+  consentHint.textContent = consentCheckbox.checked
+    ? "18+ confirmed. Keep it consensual, and say stop or slow down any time."
+    : "Adult chat stays locked until you confirm you are 18+ and want a consensual conversation.";
 }
 
 function resizeInput() {
