@@ -1,0 +1,11 @@
+{
+  "name": "cloud-chat",
+  "version": "1.0.0",
+  "description": "Secure Cloud AI Chat Application built with Cloudflare Pages Functions",
+  "scripts": {
+    "dev": "wrangler pages dev ."
+  },
+  "devDependencies": {
+    "wrangler": "^3.55.0"
+  }
+}

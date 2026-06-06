@@ -1,0 +1,7 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "cloud-chat"
+compatibility_date = "2024-03-29"
+pages_build_output_dir = "."
+
+[ai]
+binding = "AI"
