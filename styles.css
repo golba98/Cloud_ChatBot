@@ -725,3 +725,161 @@ textarea:focus {
     padding-bottom: 11px;
   }
 }
+
+/* ─── Age Gate Overlay ─────────────────────────────── */
+
+.age-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(18, 13, 18, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: gate-fade-in 280ms ease;
+}
+
+.age-gate.hidden {
+  display: none !important;
+}
+
+@keyframes gate-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.age-gate-box {
+  max-width: 440px;
+  width: calc(100% - 48px);
+  padding: 40px 36px;
+  border: 1px solid var(--success-border);
+  border-radius: 28px;
+  background: linear-gradient(145deg, rgba(42, 24, 41, 0.98), rgba(24, 14, 24, 0.98));
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 158, 192, 0.06);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+}
+
+.age-gate-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #ffcfdd, #f6a9c0 55%, #ffd7a3);
+  color: #4d152d;
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  box-shadow: 0 10px 30px rgba(255, 158, 192, 0.36);
+  margin-bottom: 4px;
+  flex: 0 0 auto;
+}
+
+.age-gate h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1;
+}
+
+.age-gate-subtitle {
+  margin: 0;
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.age-gate-terms {
+  width: 100%;
+  padding: 16px 20px;
+  border: 1px solid var(--success-border);
+  border-radius: 16px;
+  background: var(--success-bg);
+  text-align: left;
+}
+
+.age-gate-terms p {
+  margin: 0 0 10px;
+  color: var(--text-soft);
+  font-size: 0.92rem;
+  font-weight: 500;
+}
+
+.age-gate-terms ul {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--text-muted);
+  font-size: 0.87rem;
+  line-height: 1.65;
+}
+
+.age-gate-btn {
+  width: 100%;
+  height: 52px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #ffb3ca, #f18887);
+  color: #36111f;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  box-shadow: 0 14px 30px rgba(241, 136, 135, 0.28);
+  transition: transform 140ms ease, box-shadow 140ms ease;
+  margin-top: 4px;
+}
+
+.age-gate-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 18px 36px rgba(241, 136, 135, 0.36);
+}
+
+.age-gate-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.age-gate-footer {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 840px) {
+  .age-gate-box {
+    padding: 28px 20px;
+    gap: 14px;
+    border-radius: 22px;
+  }
+
+  .age-gate h2 {
+    font-size: 1.65rem;
+  }
+
+  .age-gate-avatar {
+    width: 54px;
+    height: 54px;
+    font-size: 1.6rem;
+  }
+
+  .age-gate-terms {
+    padding: 14px 16px;
+  }
+}
