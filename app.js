@@ -2,12 +2,7 @@ const MAX_MESSAGE_LENGTH = 2000;
 const MAX_HISTORY_MESSAGES = 10;
 let isAgeConfirmed = false;
 
-const INITIAL_MESSAGES = [
-  {
-    role: "received",
-    text: "Hey, I'm Maya. Before we start, tell me the vibe you want tonight — sweet, teasing, romantic, or playful. We'll keep it adult, consensual, and at your pace.",
-  },
-];
+const INITIAL_MESSAGES = [];
 
 let isWaiting = false;
 let conversationHistory = [];
@@ -38,6 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
   ageGateConfirmBtn.addEventListener("click", confirmAgeGate);
 
   setSidebarTime();
+  cleanupOldStorage();
   resetChat();
   updateCharacterCounter();
 });
@@ -451,4 +447,28 @@ function formatTime(date) {
 
 function isBlockedSlashCommand(input) {
   return input.trim().startsWith("/");
+}
+
+function cleanupOldStorage() {
+  try {
+    const localKeys = Object.keys(localStorage);
+    localKeys.forEach((key) => {
+      const value = localStorage.getItem(key);
+      if (value && (value.includes("Hey, I'm Maya") || value.includes("vibe you want tonight") || value.includes("consensual, and at your pace"))) {
+        localStorage.removeItem(key);
+        console.debug(`Cleared old storage key: ${key}`);
+      }
+    });
+
+    const sessionKeys = Object.keys(sessionStorage);
+    sessionKeys.forEach((key) => {
+      const value = sessionStorage.getItem(key);
+      if (value && (value.includes("Hey, I'm Maya") || value.includes("vibe you want tonight") || value.includes("consensual, and at your pace"))) {
+        sessionStorage.removeItem(key);
+        console.debug(`Cleared old sessionStorage key: ${key}`);
+      }
+    });
+  } catch (e) {
+    console.warn("Storage cleanup failed:", e);
+  }
 }
