@@ -1,0 +1,8 @@
+{
+  "appName": "ChatBot in the Sky",
+  "assistantName": "Sky",
+  "description": "A friendly Cloudflare Pages chatbot you can yap to, brainstorm with, study with, or ask everyday questions.",
+  "provider": "Cloudflare AI",
+  "model": "google/gemma-4-12b-qat",
+  "configVersion": "1.0.0"
+}
