@@ -112,7 +112,6 @@ document.addEventListener("DOMContentLoaded", () => {
     window.visualViewport.addEventListener("resize", scrollToLatest);
     window.visualViewport.addEventListener("scroll", scrollToLatest);
   }
-
   // Active status interaction helpers
   document.addEventListener("click", () => {
     resetInactivityTimer();

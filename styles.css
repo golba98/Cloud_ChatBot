@@ -1163,7 +1163,6 @@ textarea::placeholder {
     font-size: 0.68rem;
   }
 }
-
 /* ─── Settings Modal & Sleek Toggle ────────────────── */
 .settings-modal {
   position: fixed;
