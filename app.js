@@ -1,7 +1,6 @@
 const MAX_MESSAGE_LENGTH = 2000;
 const MAX_HISTORY_MESSAGES = 10;
-let isAgeConfirmed = false;
-
+let isWelcomeConfirmed = false;
 
 let isWaiting = false;
 let conversationHistory = [];
@@ -14,14 +13,12 @@ let currentStatus = "online";
 
 // Presence states variables
 let currentPresenceState = "online";
-let sleepingMessageCount = 0;
-const SLEEPY_RESPONSES = [
-  "mm half asleep rn",
-  "barely awake lol",
-  "i’ll talk properly later",
-  "sleepy. come back later maybe",
-  "too tired, talk tomorrow ok",
-  "zzz sleepy, text me in the morning"
+let standbyMessageCount = 0;
+const STANDBY_RESPONSES = [
+  "System is currently in standby mode. I'll respond fully when I'm back online!",
+  "Low-power standby is active. Talk to you soon!",
+  "Currently in standby mode. Let's chat more later!",
+  "System is in scheduled standby. I'll get back to you shortly."
 ];
 
 const chatMessages = document.getElementById("chat-messages");
@@ -34,8 +31,8 @@ const errorContainer = document.getElementById("error-container");
 const errorText = document.getElementById("error-text");
 const closeErrorBtn = document.getElementById("close-error-btn");
 const sidebarTime = document.getElementById("sidebar-time");
-const ageGate = document.getElementById("age-gate");
-const ageGateConfirmBtn = document.getElementById("age-gate-confirm");
+const welcomeGate = document.getElementById("welcome-gate");
+const welcomeGateStart = document.getElementById("welcome-gate-start");
 const sidebarToggle = document.getElementById("sidebar-toggle");
 const sidebarOverlay = document.getElementById("sidebar-overlay");
 const appShell = document.querySelector(".app-shell");
@@ -52,7 +49,23 @@ document.addEventListener("DOMContentLoaded", () => {
     clearBtn.addEventListener("click", () => resetChat());
   }
   closeErrorBtn.addEventListener("click", hideError);
-  ageGateConfirmBtn.addEventListener("click", confirmAgeGate);
+  
+  if (welcomeGateStart) {
+    welcomeGateStart.addEventListener("click", confirmWelcomeGate);
+  }
+
+  // Handle welcome suggestion buttons
+  const suggestionBtns = document.querySelectorAll(".suggestion-btn");
+  suggestionBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const text = btn.getAttribute("data-text");
+      if (text && messageInput) {
+        messageInput.value = text;
+        resizeInput();
+      }
+      confirmWelcomeGate();
+    });
+  });
 
   if (sidebarToggle) {
     sidebarToggle.addEventListener("click", toggleSidebar);
@@ -100,7 +113,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Keyboard scroll and visual viewport helpers for mobile devices
   if (messageInput) {
     messageInput.addEventListener("focus", () => {
       setTimeout(scrollToLatest, 150);
@@ -112,7 +124,7 @@ document.addEventListener("DOMContentLoaded", () => {
     window.visualViewport.addEventListener("resize", scrollToLatest);
     window.visualViewport.addEventListener("scroll", scrollToLatest);
   }
-  // Active status interaction helpers
+  
   document.addEventListener("click", () => {
     resetInactivityTimer();
   });
@@ -128,7 +140,7 @@ document.addEventListener("DOMContentLoaded", () => {
   resetChat();
   updateCharacterCounter();
 
-  // Periodically update presence state (e.g., every 30 seconds)
+  // Periodically update presence state (every 30 seconds)
   setInterval(updatePresenceState, 30000);
 });
 
@@ -147,8 +159,8 @@ function setStatus(status) {
       contactStatusEl.textContent = "away";
     } else if (status === "busy") {
       contactStatusEl.textContent = "busy";
-    } else if (status === "sleeping") {
-      contactStatusEl.textContent = "sleeping";
+    } else if (status === "standby") {
+      contactStatusEl.textContent = "standby";
     }
   }
   
@@ -158,8 +170,8 @@ function setStatus(status) {
       dot.classList.add("away");
     } else if (status === "busy") {
       dot.classList.add("busy");
-    } else if (status === "sleeping") {
-      dot.classList.add("sleeping");
+    } else if (status === "standby") {
+      dot.classList.add("standby");
     }
   });
 
@@ -168,20 +180,20 @@ function setStatus(status) {
 
 function updateComposerPlaceholder(status) {
   if (!messageInput) return;
-  const isRealistic = localStorage.getItem("mayaRealisticAvailability") !== "false";
+  const isRealistic = localStorage.getItem("skyRealisticAvailability") !== "false";
   const wrap = document.querySelector(".message-input-wrap");
   
   if (!isRealistic || status === "online" || status === "typing...") {
-    messageInput.placeholder = "Message Maya...";
+    messageInput.placeholder = "Message Sky...";
     if (wrap) wrap.classList.remove("unavailable");
   } else if (status === "away") {
-    messageInput.placeholder = "Maya is away right now...";
+    messageInput.placeholder = "Sky is away right now...";
     if (wrap) wrap.classList.add("unavailable");
   } else if (status === "busy") {
-    messageInput.placeholder = "Maya might reply later...";
+    messageInput.placeholder = "Sky might reply later...";
     if (wrap) wrap.classList.add("unavailable");
-  } else if (status === "sleeping") {
-    messageInput.placeholder = "Maya is sleeping...";
+  } else if (status === "standby") {
+    messageInput.placeholder = "Sky is in standby...";
     if (wrap) wrap.classList.add("unavailable");
   }
 }
@@ -195,8 +207,8 @@ function resetInactivityTimer() {
     return;
   }
   
-  const isRealistic = localStorage.getItem("mayaRealisticAvailability") !== "false";
-  const timeoutMs = isRealistic ? 300000 : 60000; // 5 minutes if realistic, 1 minute otherwise
+  const isRealistic = localStorage.getItem("skyRealisticAvailability") !== "false";
+  const timeoutMs = isRealistic ? 300000 : 60000;
   
   inactivityTimeoutId = setTimeout(() => {
     if (isRealistic) {
@@ -210,54 +222,7 @@ function resetInactivityTimer() {
 }
 
 function splitResponse(text) {
-  // If message is safety-related, don't split
-  const safetyKeywords = [
-    "consent", "boundary", "boundaries", "inappropriate", "minor", "under 18", 
-    "age limit", "comfort", "uncomfortable", "de-escalate", "rules", "policy", 
-    "policies", "guidelines", "safety", "unable to", "cannot", "can't", "respect",
-    "stop", "slow down", "back off", "not that"
-  ];
-  const lowercaseText = text.toLowerCase();
-  const isSafety = safetyKeywords.some(kw => lowercaseText.includes(kw));
-  if (isSafety) {
-    return [text];
-  }
-
-  // 35% chance to split
-  if (Math.random() > 0.35) {
-    return [text];
-  }
-
-  // Split by newlines first if available
-  const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
-  if (lines.length > 1) {
-    if (lines.length === 2) {
-      return lines;
-    }
-    // Max 3, join the rest into the last part
-    if (lines.length >= 3) {
-      const parts = [lines[0], lines[1], lines.slice(2).join("\n")];
-      if (Math.random() < 0.8) {
-        return [lines[0], lines.slice(1).join("\n")];
-      }
-      return parts;
-    }
-  }
-
-  // Otherwise split by sentence boundaries (. ! ?) followed by space
-  const sentences = text.split(/(?<=[.!?])\s+/);
-  if (sentences.length > 1) {
-    if (sentences.length === 2) {
-      return sentences;
-    }
-    // We have 3 or more sentences. 20% chance to split into 3, otherwise 2.
-    if (Math.random() < 0.2) {
-      return [sentences[0], sentences[1], sentences.slice(2).join(" ")];
-    } else {
-      return [sentences[0], sentences.slice(1).join(" ")];
-    }
-  }
-
+  // Do not split responses to preserve code blocks and structured formatting
   return [text];
 }
 
@@ -284,8 +249,8 @@ async function handleSubmit(event) {
 
   const message = messageInput.value.trim();
 
-  if (!isAgeConfirmed) {
-    showAgeGate();
+  if (!isWelcomeConfirmed) {
+    showWelcomeGate();
     return;
   }
 
@@ -311,7 +276,7 @@ async function handleSubmit(event) {
     return;
   }
 
-  const isRealistic = localStorage.getItem("mayaRealisticAvailability") !== "false";
+  const isRealistic = localStorage.getItem("skyRealisticAvailability") !== "false";
   let targetStateBeforeReply = currentPresenceState;
   let isReturning = false;
   let wasSleeping = false;
@@ -321,35 +286,31 @@ async function handleSubmit(event) {
   clearComposer();
   setWaiting(true);
 
-  // If Maya is sleeping, process sleeping state behaviors
-  if (isRealistic && targetStateBeforeReply === "sleeping") {
-    sleepingMessageCount++;
-    if (sleepingMessageCount >= 3) {
-      // Wakes up!
+  // If Sky is in standby, process standby behaviors
+  if (isRealistic && targetStateBeforeReply === "standby") {
+    standbyMessageCount++;
+    if (standbyMessageCount >= 3) {
       setPresenceState("online", 25 * 60 * 1000);
       isReturning = true;
       wasSleeping = true;
       targetStateBeforeReply = "online";
     } else {
-      // 60% chance to ignore, 40% chance of a short sleepy reply
       const roll = Math.random();
       if (roll < 0.6) {
-        // No reply - wait 5-8 seconds, then unlock composer
         const ignoreDelay = randomRange(5000, 8000);
-        setStatus("sleeping");
+        setStatus("standby");
         
         setTimeout(() => {
           setWaiting(false);
-          setStatus("sleeping");
+          setStatus("standby");
           resetInactivityTimer();
           messageInput.focus();
         }, ignoreDelay);
         return;
       } else {
-        // Sleepy reply - wait 10-20 seconds before replying, show typing indicator only for last 3.5s
-        const sleepyReply = SLEEPY_RESPONSES[Math.floor(Math.random() * SLEEPY_RESPONSES.length)];
-        const delay = randomRange(10000, 20000);
-        setStatus("sleeping");
+        const standbyReply = STANDBY_RESPONSES[Math.floor(Math.random() * STANDBY_RESPONSES.length)];
+        const delay = randomRange(10000, 18000);
+        setStatus("standby");
         
         setTimeout(async () => {
           setStatus("typing...");
@@ -359,9 +320,9 @@ async function handleSubmit(event) {
           
           setTimeout(() => {
             removeAllTypingIndicators();
-            appendMessage("received", sleepyReply);
+            appendMessage("received", standbyReply);
             setWaiting(false);
-            setStatus("sleeping");
+            setStatus("standby");
             resetInactivityTimer();
             messageInput.focus();
           }, 3500);
@@ -374,7 +335,6 @@ async function handleSubmit(event) {
     wasSleeping = false;
   }
 
-  // Calculate reply delay pacing
   const initialDelay = calculateReplyDelay(message, targetStateBeforeReply, isRealistic);
   
   if (initialDelay > 4000) {
@@ -399,7 +359,7 @@ async function handleSubmit(event) {
       },
       body: JSON.stringify({
         message,
-        adultConfirmed: isAgeConfirmed,
+        tone: localStorage.getItem("skyChatTone") || "chill",
         history: getRecentHistory(),
         isReturning,
         wasSleeping
@@ -419,10 +379,9 @@ async function handleSubmit(event) {
       throw new Error(data.error || "Message could not be sent.");
     }
 
-    const reply = data.reply || "Mm, I missed that. Try sending it again.";
+    const reply = data.reply || "Hmm, I missed that. Try sending it again.";
     const parts = splitResponse(reply);
 
-    // Wait out the rest of the initial delay if needed
     const elapsed = performance.now() - requestStartedAt;
     let remainingDelay = initialDelay - elapsed;
     if (remainingDelay < 300) {
@@ -453,11 +412,9 @@ async function handleSubmit(event) {
       return;
     }
 
-    // Display first part
     removeAllTypingIndicators();
     appendMessage("received", parts[0]);
 
-    // Handle remaining split parts
     for (let i = 1; i < parts.length; i++) {
       const part = parts[i];
       const splitDelay = randomRange(800, 2000);
@@ -477,7 +434,6 @@ async function handleSubmit(event) {
       appendMessage("received", part);
     }
 
-    // Transition back to online if she was away/busy and responded
     if (isRealistic && (targetStateBeforeReply === "away" || targetStateBeforeReply === "busy")) {
       setPresenceState("online", 15 * 60 * 1000);
     }
@@ -521,18 +477,18 @@ function resetChat() {
   scrollToLatest();
 }
 
-function confirmAgeGate() {
-  isAgeConfirmed = true;
-  hideAgeGate();
+function confirmWelcomeGate() {
+  isWelcomeConfirmed = true;
+  hideWelcomeGate();
   messageInput.focus();
 }
 
-function hideAgeGate() {
-  ageGate.classList.add("hidden");
+function hideWelcomeGate() {
+  if (welcomeGate) welcomeGate.classList.add("hidden");
 }
 
-function showAgeGate() {
-  ageGate.classList.remove("hidden");
+function showWelcomeGate() {
+  if (welcomeGate) welcomeGate.classList.remove("hidden");
 }
 
 function appendPrivacyNote() {
@@ -543,7 +499,7 @@ function appendPrivacyNote() {
       <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
       <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
     </svg>
-    <span>This is a private conversation. You’re in control.</span>
+    <span>Conversations are saved locally on your device.</span>
   `;
   chatMessages.appendChild(note);
 }
@@ -563,10 +519,10 @@ function appendEmptyState() {
   emptyState.className = "chat-empty-state";
   emptyState.innerHTML = `
     <div class="empty-state-brand">
-      <img src="assets/logo.svg" alt="Maya After Dark Logo" class="empty-state-logo" />
-      <span class="empty-state-title">Maya After Dark</span>
+      <img src="assets/logo.svg" alt="ChatBot in the Sky Logo" class="empty-state-logo" />
+      <span class="empty-state-title">ChatBot in the Sky</span>
     </div>
-    <p class="empty-state-subtitle">Your private AI companion. Tap below to start talking.</p>
+    <p class="empty-state-subtitle">Your friendly AI helper. Send a message below to start talking.</p>
   `;
   chatMessages.appendChild(emptyState);
 }
@@ -610,11 +566,11 @@ function appendTypingIndicator() {
 
   const bubble = document.createElement("div");
   bubble.className = "bubble typing-bubble";
-  bubble.setAttribute("aria-label", "Maya is composing a reply");
+  bubble.setAttribute("aria-label", "Sky is composing a reply");
 
   const label = document.createElement("span");
   label.className = "typing-label";
-  label.textContent = "Maya is typing";
+  label.textContent = "Sky is typing";
 
   const dots = document.createElement("span");
   dots.className = "typing-dots";
@@ -697,43 +653,8 @@ function clearPendingResponse({ invalidateRequest = true } = {}) {
   }
 }
 
-function waitForTypingDelay(delayMs) {
-  if (delayMs <= 0) {
-    return Promise.resolve();
-  }
-
-  return new Promise((resolve) => {
-    pendingTypingTimeoutResolve = resolve;
-    pendingTypingTimeoutId = window.setTimeout(() => {
-      pendingTypingTimeoutId = null;
-      pendingTypingTimeoutResolve = null;
-      resolve();
-    }, delayMs);
-  });
-}
-
 function randomRange(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-function calculateHumanTypingDelay(text) {
-  const trimmedText = typeof text === "string" ? text.trim() : "";
-  if (!trimmedText) {
-    return randomRange(500, 900);
-  }
-
-  // 0.04 - 0.06 seconds per character is 40 - 60 ms per character
-  const msPerChar = randomRange(40, 60);
-  let delay = trimmedText.length * msPerChar;
-
-  // Very short replies (less than 15 chars) have a small delay around 500-900ms
-  if (trimmedText.length < 15) {
-    delay = Math.max(delay, randomRange(500, 900));
-  }
-
-  // Cap normal delays around 4-6 seconds
-  const cap = randomRange(4000, 6000);
-  return Math.min(delay, cap);
 }
 
 function clearComposer() {
@@ -749,7 +670,6 @@ function updateCharacterCounter() {
   charCounter.classList.toggle("warning", length > MAX_MESSAGE_LENGTH * 0.9 && length < MAX_MESSAGE_LENGTH);
   charCounter.classList.toggle("limit", length >= MAX_MESSAGE_LENGTH);
 }
-
 
 function resizeInput() {
   messageInput.style.height = "auto";
@@ -793,8 +713,7 @@ function cleanupOldStorage() {
   try {
     const localKeys = Object.keys(localStorage);
     localKeys.forEach((key) => {
-      const value = localStorage.getItem(key);
-      if (value && (value.includes("Hey, I'm Maya") || value.includes("vibe you want tonight") || value.includes("consensual, and at your pace"))) {
+      if (key.startsWith("maya")) {
         localStorage.removeItem(key);
         console.debug(`Cleared old storage key: ${key}`);
       }
@@ -802,8 +721,7 @@ function cleanupOldStorage() {
 
     const sessionKeys = Object.keys(sessionStorage);
     sessionKeys.forEach((key) => {
-      const value = sessionStorage.getItem(key);
-      if (value && (value.includes("Hey, I'm Maya") || value.includes("vibe you want tonight") || value.includes("consensual, and at your pace"))) {
+      if (key.startsWith("maya")) {
         sessionStorage.removeItem(key);
         console.debug(`Cleared old sessionStorage key: ${key}`);
       }
@@ -812,9 +730,10 @@ function cleanupOldStorage() {
     console.warn("Storage cleanup failed:", e);
   }
 }
+
 function initializeSidebarState() {
   const isMobile = window.innerWidth <= 840;
-  const stored = localStorage.getItem("mayaSidebarCollapsed");
+  const stored = localStorage.getItem("skySidebarCollapsed");
   const isCollapsed = stored === "true" || (stored === null && isMobile);
   
   setSidebarCollapsed(isCollapsed);
@@ -830,14 +749,14 @@ function setSidebarCollapsed(collapsed) {
   if (!appShell) return;
   if (collapsed) {
     appShell.classList.add("sidebar-collapsed");
-    localStorage.setItem("mayaSidebarCollapsed", "true");
+    localStorage.setItem("skySidebarCollapsed", "true");
     if (sidebarToggle) {
       sidebarToggle.setAttribute("aria-label", "Show sidebar");
       sidebarToggle.setAttribute("aria-expanded", "false");
     }
   } else {
     appShell.classList.remove("sidebar-collapsed");
-    localStorage.setItem("mayaSidebarCollapsed", "false");
+    localStorage.setItem("skySidebarCollapsed", "false");
     if (sidebarToggle) {
       sidebarToggle.setAttribute("aria-label", "Hide sidebar");
       sidebarToggle.setAttribute("aria-expanded", "true");
@@ -845,19 +764,17 @@ function setSidebarCollapsed(collapsed) {
   }
 }
 
-// --- Maya Presence & Human Pacing Helpers ---
-
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function calculateReplyDelay(userMessage, state, isRealistic) {
-  let baseDelay = randomRange(1500, 4000);
+  let baseDelay = randomRange(1000, 3000);
   const len = userMessage.length;
   if (len < 15) {
-    baseDelay = randomRange(700, 1500);
+    baseDelay = randomRange(600, 1200);
   } else if (len > 120) {
-    baseDelay = randomRange(3000, 6000);
+    baseDelay = randomRange(2500, 4500);
   }
 
   if (!isRealistic) {
@@ -866,32 +783,32 @@ function calculateReplyDelay(userMessage, state, isRealistic) {
 
   if (state === "away") {
     if (Math.random() < 0.3) {
-      return randomRange(8000, 30000);
+      return randomRange(6000, 15000);
     }
   } else if (state === "busy") {
     if (Math.random() < 0.5) {
-      return randomRange(10000, 30000);
+      return randomRange(8000, 18000);
     }
-  } else if (state === "sleeping") {
-    return randomRange(12000, 30000);
+  } else if (state === "standby") {
+    return randomRange(10000, 22000);
   }
 
   return baseDelay;
 }
 
 function updatePresenceState() {
-  const isRealistic = localStorage.getItem("mayaRealisticAvailability") !== "false";
+  const isRealistic = localStorage.getItem("skyRealisticAvailability") !== "false";
   if (!isRealistic) {
     currentPresenceState = "online";
-    sessionStorage.removeItem("mayaPresenceState");
-    sessionStorage.removeItem("mayaPresenceStateExpires");
+    sessionStorage.removeItem("skyPresenceState");
+    sessionStorage.removeItem("skyPresenceStateExpires");
     setStatus("online");
     return;
   }
 
   const now = Date.now();
-  const savedState = sessionStorage.getItem("mayaPresenceState");
-  const savedExpires = sessionStorage.getItem("mayaPresenceStateExpires");
+  const savedState = sessionStorage.getItem("skyPresenceState");
+  const savedExpires = sessionStorage.getItem("skyPresenceStateExpires");
 
   if (savedState && savedExpires && now < parseInt(savedExpires, 10)) {
     currentPresenceState = savedState;
@@ -906,7 +823,7 @@ function updatePresenceState() {
   if (hour >= 2 && hour < 7) {
     const roll = Math.random();
     if (roll < 0.8) {
-      newState = "sleeping";
+      newState = "standby";
       durationMinutes = randomRange(60, 180);
     } else if (roll < 0.95) {
       newState = "away";
@@ -918,7 +835,7 @@ function updatePresenceState() {
   } else if (hour >= 23 || hour < 2) {
     const roll = Math.random();
     if (roll < 0.4) {
-      newState = "sleeping";
+      newState = "standby";
       durationMinutes = randomRange(60, 120);
     } else if (roll < 0.8) {
       newState = "away";
@@ -947,11 +864,11 @@ function updatePresenceState() {
 function setPresenceState(state, durationMs) {
   const oldState = currentPresenceState;
   currentPresenceState = state;
-  sessionStorage.setItem("mayaPresenceState", state);
-  sessionStorage.setItem("mayaPresenceStateExpires", (Date.now() + durationMs).toString());
+  sessionStorage.setItem("skyPresenceState", state);
+  sessionStorage.setItem("skyPresenceStateExpires", (Date.now() + durationMs).toString());
   
-  if (oldState === "sleeping" && state !== "sleeping") {
-    sleepingMessageCount = 0;
+  if (oldState === "standby" && state !== "standby") {
+    standbyMessageCount = 0;
   }
   
   setStatus(state);
@@ -959,18 +876,32 @@ function setPresenceState(state, durationMs) {
 
 function initializeSettings() {
   const toggle = document.getElementById("realistic-availability-toggle");
-  const stored = localStorage.getItem("mayaRealisticAvailability");
+  const stored = localStorage.getItem("skyRealisticAvailability");
   const isEnabled = stored !== "false";
   
-  localStorage.setItem("mayaRealisticAvailability", isEnabled ? "true" : "false");
+  localStorage.setItem("skyRealisticAvailability", isEnabled ? "true" : "false");
   
   if (toggle) {
     toggle.checked = isEnabled;
     toggle.addEventListener("change", (e) => {
-      localStorage.setItem("mayaRealisticAvailability", e.target.checked ? "true" : "false");
+      localStorage.setItem("skyRealisticAvailability", e.target.checked ? "true" : "false");
       updatePresenceState();
     });
   }
+
+  // Bind radio button selections for chat-tone
+  const toneRadios = document.querySelectorAll('input[name="chat-tone"]');
+  const storedTone = localStorage.getItem("skyChatTone") || "chill";
+  toneRadios.forEach((radio) => {
+    if (radio.value === storedTone) {
+      radio.checked = true;
+    }
+    radio.addEventListener("change", (e) => {
+      if (e.target.checked) {
+        localStorage.setItem("skyChatTone", e.target.value);
+      }
+    });
+  });
 
   const settingsBtn = document.getElementById("settings-btn");
   const settingsModal = document.getElementById("settings-modal");

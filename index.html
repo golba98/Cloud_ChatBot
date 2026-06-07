@@ -3,43 +3,41 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="A polished private AI companion chat with 18+ consent-first adult roleplay boundaries.">
-  <title>Maya After Dark</title>
+  <meta name="description" content="A friendly cloud-inspired AI helper you can yap to, vent to, brainstorm with, or ask normal everyday questions.">
+  <title>ChatBot in the Sky</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
   <meta name="theme-color" content="#0b141a">
 </head>
 <body>
-  <div id="age-gate" class="age-gate" role="dialog" aria-modal="true" aria-labelledby="age-gate-title">
-    <div class="age-gate-box">
-      <img src="assets/logo.svg" alt="Maya After Dark" class="brand-logo age-gate-logo" />
-      <div class="age-gate-avatar" aria-hidden="true">18+</div>
-      <h2 id="age-gate-title">Maya After Dark</h2>
-      <p class="age-gate-subtitle">Private companion chat</p>
-      <div class="age-gate-terms">
-        <p>This is an adults-only fictional chat experience.</p>
-        <ul>
-          <li>You must be 18 or older to continue.</li>
-          <li>Conversation must remain consensual throughout.</li>
-          <li>You can stop or reset anytime.</li>
-        </ul>
+  <div id="welcome-gate" class="welcome-gate" role="dialog" aria-modal="true" aria-labelledby="welcome-gate-title">
+    <div class="welcome-gate-box">
+      <img src="assets/logo.svg" alt="ChatBot in the Sky" class="brand-logo welcome-gate-logo" />
+      <h2 id="welcome-gate-title">ChatBot in the Sky</h2>
+      <p class="welcome-gate-subtitle">Your friendly cloud helper. Let's yap about something random, vent, study, or brainstorm ideas.</p>
+      
+      <div class="welcome-suggestions">
+        <button class="suggestion-btn" type="button" data-text="Let's yap about something random!">Yap with Sky</button>
+        <button class="suggestion-btn" type="button" data-text="Let's brainstorm some ideas!">Brainstorming</button>
+        <button class="suggestion-btn" type="button" data-text="Can you help me study a topic?">Study Helper</button>
+        <button class="suggestion-btn" type="button" data-text="Let's write and debug some code!">Coding Help</button>
       </div>
-      <button id="age-gate-confirm" class="age-gate-btn" type="button">I am 18+ — Enter</button>
-      <p class="age-gate-footer">By continuing you confirm you are an adult and consent to these terms.</p>
+      
+      <button id="welcome-gate-start" class="welcome-gate-btn" type="button">Start Chatting</button>
     </div>
   </div>
 
   <div class="app-shell">
     <div id="sidebar-overlay" class="sidebar-overlay" aria-hidden="true"></div>
-    <aside class="sidebar" aria-label="Companion chats">
+    <aside class="sidebar" aria-label="Sky chats">
       <header class="sidebar-header">
         <div class="sidebar-title-row">
           <div class="brand-block">
             <img src="assets/logo.svg" alt="" class="brand-logo sidebar-logo" aria-hidden="true" />
-            <h1>Maya After Dark</h1>
+            <h1>ChatBot in the Sky</h1>
           </div>
           <div class="sidebar-actions">
             <button class="icon-button" type="button" aria-label="New chat" title="New chat">
@@ -58,10 +56,10 @@
 
         <div class="companion-profile-card">
           <div class="companion-profile-info">
-            <span class="companion-profile-title">Private Companion</span>
-            <span class="badge-18">18+</span>
+            <span class="companion-profile-title">Chat Companion</span>
+            <span class="badge-public">Helper</span>
           </div>
-          <p class="companion-profile-consent">Consent-first. You’re in control.</p>
+          <p class="companion-profile-consent">A friendly, helpful assistant for brainstorming, study, coding, or casual yapping.</p>
         </div>
 
         <div class="search-container">
@@ -82,7 +80,7 @@
           </span>
           <span class="conversation-main">
             <span class="conversation-top">
-              <span class="conversation-name">Maya</span>
+              <span class="conversation-name">Sky</span>
               <time class="conversation-time" id="sidebar-time">09:42</time>
             </span>
             <span class="conversation-bottom">
@@ -98,11 +96,11 @@
           <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
           <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
         </svg>
-        <span>All conversations are private and stay on your device.</span>
+        <span>Secure local conversation. Settings are saved to your device.</span>
       </footer>
     </aside>
 
-    <main class="chat-panel" aria-label="Conversation with Maya">
+    <main class="chat-panel" aria-label="Conversation with Sky">
       <header class="chat-header">
         <div class="contact-summary">
           <button id="sidebar-toggle" class="sidebar-toggle" type="button" aria-label="Hide sidebar" aria-expanded="true">
@@ -116,7 +114,7 @@
           </span>
           <span class="contact-text">
             <span class="contact-name-row">
-              <span class="contact-name">Maya</span>
+              <span class="contact-name">Sky</span>
               <svg aria-hidden="true" viewBox="0 0 24 24" class="chevron-down-icon">
                 <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
@@ -172,10 +170,10 @@
           <label class="message-input-wrap">
             <textarea
               id="message-input"
-              placeholder="Message Maya..."
+              placeholder="Message Sky..."
               maxlength="2000"
               rows="1"
-              aria-label="Message Maya..."
+              aria-label="Message Sky..."
             ></textarea>
             <span id="char-counter" class="char-counter">0 / 2000</span>
           </label>
@@ -206,10 +204,32 @@
       </header>
       <div class="settings-content">
         <div class="settings-group">
+          <div class="settings-option-vertical">
+            <h3>Assistant Tone</h3>
+            <p>Customize Sky's style and responses for different tasks:</p>
+            <div class="tone-selector">
+              <label class="tone-radio">
+                <input type="radio" name="chat-tone" value="chill" checked>
+                <span>Chill</span>
+              </label>
+              <label class="tone-radio">
+                <input type="radio" name="chat-tone" value="study">
+                <span>Study</span>
+              </label>
+              <label class="tone-radio">
+                <input type="radio" name="chat-tone" value="brainstorm">
+                <span>Brainstorm</span>
+              </label>
+              <label class="tone-radio">
+                <input type="radio" name="chat-tone" value="coding">
+                <span>Coding</span>
+              </label>
+            </div>
+          </div>
           <div class="settings-option">
             <div class="settings-option-text">
-              <h3>Realistic availability</h3>
-              <p>Maya will have realistic away, busy, and sleeping schedules based on your local time. Turn off for instant replies.</p>
+              <h3>Simulated availability</h3>
+              <p>Sky will simulate being online, away, or in standby based on local time. Turn off for instant replies.</p>
             </div>
             <label class="switch-control">
               <input type="checkbox" id="realistic-availability-toggle" checked>
