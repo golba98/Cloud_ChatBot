@@ -334,6 +334,22 @@ svg {
   background: var(--accent);
   flex-shrink: 0;
   margin-right: 6px;
+  transition: background 200ms ease, opacity 200ms ease;
+}
+
+.status-dot.away {
+  background: var(--text-muted);
+  opacity: 0.6;
+}
+
+.status-dot.busy {
+  background: #ffb300;
+  opacity: 0.8;
+}
+
+.status-dot.sleeping {
+  background: #9c27b0;
+  opacity: 0.5;
 }
 
 /* Sidebar footer */
@@ -581,16 +597,16 @@ textarea::-webkit-scrollbar-thumb {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 14px;
-  border-radius: 8px;
-  min-width: 96px;
-  background: #24343d;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border-top-left-radius: 0;
+  min-width: auto;
+  background: var(--received-bg);
   color: var(--text-muted);
 }
 
 .typing-label {
-  font-size: 0.84rem;
-  color: var(--text-muted);
+  display: none;
 }
 
 .typing-dots {
@@ -937,4 +953,168 @@ textarea::placeholder {
     width: 36px;
     height: 36px;
   }
+}
+
+/* ─── Settings Modal & Sleek Toggle ────────────────── */
+.settings-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(11, 20, 26, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  animation: settings-fade-in 200ms ease;
+}
+
+@keyframes settings-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.settings-box {
+  width: calc(100% - 32px);
+  max-width: 480px;
+  background: #1f2c34;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: settings-slide-up 250ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes settings-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-header h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0;
+}
+
+.settings-close-btn {
+  font-size: 1.5rem;
+  color: var(--text-muted);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  transition: background 150ms ease, color 150ms ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.settings-close-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-soft);
+}
+
+.settings-content {
+  padding: 24px;
+}
+
+.settings-group {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.settings-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.settings-option-text {
+  flex: 1;
+}
+
+.settings-option-text h3 {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text);
+  margin: 0 0 4px;
+}
+
+.settings-option-text p {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Switch control */
+.switch-control {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.switch-control input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.switch-slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background-color: var(--field-bg);
+  transition: .4s;
+  border-radius: 34px;
+  border: 1px solid var(--border);
+}
+
+.switch-slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 3px;
+  bottom: 3px;
+  background-color: var(--text-muted);
+  transition: .4s;
+  border-radius: 50%;
+}
+
+.switch-control input:checked + .switch-slider {
+  background-color: var(--sent-bg);
+  border-color: var(--accent);
+}
+
+.switch-control input:checked + .switch-slider:before {
+  transform: translateX(22px);
+  background-color: var(--accent);
+}
+
+/* Unavailable composer styles */
+.message-input-wrap.unavailable textarea::placeholder {
+  opacity: 0.55;
+  color: var(--text-muted);
+  font-style: italic;
 }

@@ -2,7 +2,20 @@ const MAX_MESSAGE_LENGTH = 2000;
 const MAX_HISTORY_MESSAGES = 10;
 let isAgeConfirmed = false;
 
-const INITIAL_MESSAGES = [];
+const CASUAL_OPENERS = [
+  "heyy",
+  "oh hi",
+  "there you are",
+  "mm hey you",
+  "took you long enough",
+  "hey stranger",
+  "was wondering when you’d show up",
+  "hi lol"
+];
+
+function getRandomOpener() {
+  return CASUAL_OPENERS[Math.floor(Math.random() * CASUAL_OPENERS.length)];
+}
 
 let isWaiting = false;
 let conversationHistory = [];
@@ -10,6 +23,20 @@ let activeRequestId = 0;
 let pendingTypingTimeoutId = null;
 let pendingTypingTimeoutResolve = null;
 let activeTypingIndicator = null;
+let inactivityTimeoutId = null;
+let currentStatus = "online";
+
+// Presence states variables
+let currentPresenceState = "online";
+let sleepingMessageCount = 0;
+const SLEEPY_RESPONSES = [
+  "mm half asleep rn",
+  "barely awake lol",
+  "i’ll talk properly later",
+  "sleepy. come back later maybe",
+  "too tired, talk tomorrow ok",
+  "zzz sleepy, text me in the morning"
+];
 
 const chatMessages = document.getElementById("chat-messages");
 const chatForm = document.getElementById("chat-form");
@@ -46,19 +73,161 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Active status interaction helpers
+  document.addEventListener("click", () => {
+    resetInactivityTimer();
+  });
+  document.addEventListener("focus", () => {
+    resetInactivityTimer();
+  });
+
+  initializeSettings();
   initializeSidebarState();
   setSidebarTime();
   cleanupOldStorage();
+  updatePresenceState();
   resetChat();
   updateCharacterCounter();
+
+  // Periodically update presence state (e.g., every 30 seconds)
+  setInterval(updatePresenceState, 30000);
 });
+
+function setStatus(status) {
+  currentStatus = status;
+  
+  const contactStatusEl = document.querySelector(".contact-status");
+  const statusDots = document.querySelectorAll(".status-dot");
+  
+  if (contactStatusEl) {
+    if (status === "online") {
+      contactStatusEl.textContent = "online now";
+    } else if (status === "typing...") {
+      contactStatusEl.textContent = "typing...";
+    } else if (status === "away") {
+      contactStatusEl.textContent = "away";
+    } else if (status === "busy") {
+      contactStatusEl.textContent = "busy";
+    } else if (status === "sleeping") {
+      contactStatusEl.textContent = "sleeping";
+    }
+  }
+  
+  statusDots.forEach((dot) => {
+    dot.className = "status-dot";
+    if (status === "away") {
+      dot.classList.add("away");
+    } else if (status === "busy") {
+      dot.classList.add("busy");
+    } else if (status === "sleeping") {
+      dot.classList.add("sleeping");
+    }
+  });
+
+  updateComposerPlaceholder(status);
+}
+
+function updateComposerPlaceholder(status) {
+  if (!messageInput) return;
+  const isRealistic = localStorage.getItem("mayaRealisticAvailability") !== "false";
+  const wrap = document.querySelector(".message-input-wrap");
+  
+  if (!isRealistic || status === "online" || status === "typing...") {
+    messageInput.placeholder = "Type a message...";
+    if (wrap) wrap.classList.remove("unavailable");
+  } else if (status === "away") {
+    messageInput.placeholder = "Maya is away right now...";
+    if (wrap) wrap.classList.add("unavailable");
+  } else if (status === "busy") {
+    messageInput.placeholder = "Maya might reply later...";
+    if (wrap) wrap.classList.add("unavailable");
+  } else if (status === "sleeping") {
+    messageInput.placeholder = "Maya is sleeping...";
+    if (wrap) wrap.classList.add("unavailable");
+  }
+}
+
+function resetInactivityTimer() {
+  if (inactivityTimeoutId) {
+    clearTimeout(inactivityTimeoutId);
+  }
+  
+  if (currentStatus === "typing...") {
+    return;
+  }
+  
+  const isRealistic = localStorage.getItem("mayaRealisticAvailability") !== "false";
+  const timeoutMs = isRealistic ? 300000 : 60000; // 5 minutes if realistic, 1 minute otherwise
+  
+  inactivityTimeoutId = setTimeout(() => {
+    if (isRealistic) {
+      if (currentPresenceState === "online") {
+        setPresenceState("away", 15 * 60 * 1000);
+      }
+    } else {
+      setStatus("away");
+    }
+  }, timeoutMs);
+}
+
+function splitResponse(text) {
+  // If message is safety-related, don't split
+  const safetyKeywords = [
+    "consent", "boundary", "boundaries", "inappropriate", "minor", "under 18", 
+    "age limit", "comfort", "uncomfortable", "de-escalate", "rules", "policy", 
+    "policies", "guidelines", "safety", "unable to", "cannot", "can't", "respect",
+    "stop", "slow down", "back off", "not that"
+  ];
+  const lowercaseText = text.toLowerCase();
+  const isSafety = safetyKeywords.some(kw => lowercaseText.includes(kw));
+  if (isSafety) {
+    return [text];
+  }
+
+  // 35% chance to split
+  if (Math.random() > 0.35) {
+    return [text];
+  }
+
+  // Split by newlines first if available
+  const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
+  if (lines.length > 1) {
+    if (lines.length === 2) {
+      return lines;
+    }
+    // Max 3, join the rest into the last part
+    if (lines.length >= 3) {
+      const parts = [lines[0], lines[1], lines.slice(2).join("\n")];
+      if (Math.random() < 0.8) {
+        return [lines[0], lines.slice(1).join("\n")];
+      }
+      return parts;
+    }
+  }
+
+  // Otherwise split by sentence boundaries (. ! ?) followed by space
+  const sentences = text.split(/(?<=[.!?])\s+/);
+  if (sentences.length > 1) {
+    if (sentences.length === 2) {
+      return sentences;
+    }
+    // We have 3 or more sentences. 20% chance to split into 3, otherwise 2.
+    if (Math.random() < 0.2) {
+      return [sentences[0], sentences[1], sentences.slice(2).join(" ")];
+    } else {
+      return [sentences[0], sentences.slice(1).join(" ")];
+    }
+  }
+
+  return [text];
+}
 
 function handleInput() {
   hideError();
   updateCharacterCounter();
   resizeInput();
+  resetInactivityTimer();
 }
-
 
 function handleKeyDown(event) {
   if (event.key === "Enter" && !event.shiftKey) {
@@ -85,13 +254,16 @@ async function handleSubmit(event) {
     return;
   }
 
+  const trimmedLowerMessage = message.toLowerCase().trim();
+  if (trimmedLowerMessage === "/clear" || trimmedLowerMessage === "/reset") {
+    clearComposer();
+    resetChat();
+    return;
+  }
+
   if (isBlockedSlashCommand(message)) {
     clearComposer();
-    if (message.toLowerCase() === "/clear") {
-      showError("Slash commands are disabled. Use the Reset button to clear the chat.");
-    } else {
-      showError("Commands are disabled in chat.");
-    }
+    showError("Commands are disabled in chat.");
     return;
   }
 
@@ -100,17 +272,85 @@ async function handleSubmit(event) {
     return;
   }
 
+  const isRealistic = localStorage.getItem("mayaRealisticAvailability") !== "false";
+  let targetStateBeforeReply = currentPresenceState;
+  let isReturning = false;
+  let wasSleeping = false;
+
   hideError();
   appendMessage("sent", message);
   clearComposer();
   setWaiting(true);
 
+  // If Maya is sleeping, process sleeping state behaviors
+  if (isRealistic && targetStateBeforeReply === "sleeping") {
+    sleepingMessageCount++;
+    if (sleepingMessageCount >= 3) {
+      // Wakes up!
+      setPresenceState("online", 25 * 60 * 1000);
+      isReturning = true;
+      wasSleeping = true;
+      targetStateBeforeReply = "online";
+    } else {
+      // 60% chance to ignore, 40% chance of a short sleepy reply
+      const roll = Math.random();
+      if (roll < 0.6) {
+        // No reply - wait 5-8 seconds, then unlock composer
+        const ignoreDelay = randomRange(5000, 8000);
+        setStatus("sleeping");
+        
+        setTimeout(() => {
+          setWaiting(false);
+          setStatus("sleeping");
+          resetInactivityTimer();
+          messageInput.focus();
+        }, ignoreDelay);
+        return;
+      } else {
+        // Sleepy reply - wait 10-20 seconds before replying, show typing indicator only for last 3.5s
+        const sleepyReply = SLEEPY_RESPONSES[Math.floor(Math.random() * SLEEPY_RESPONSES.length)];
+        const delay = randomRange(10000, 20000);
+        setStatus("sleeping");
+        
+        setTimeout(async () => {
+          setStatus("typing...");
+          removeAllTypingIndicators();
+          activeTypingIndicator = appendTypingIndicator();
+          scrollToLatest();
+          
+          setTimeout(() => {
+            removeAllTypingIndicators();
+            appendMessage("received", sleepyReply);
+            setWaiting(false);
+            setStatus("sleeping");
+            resetInactivityTimer();
+            messageInput.focus();
+          }, 3500);
+        }, delay - 3500);
+        return;
+      }
+    }
+  } else if (isRealistic && (targetStateBeforeReply === "away" || targetStateBeforeReply === "busy")) {
+    isReturning = true;
+    wasSleeping = false;
+  }
+
+  // Calculate reply delay pacing
+  const initialDelay = calculateReplyDelay(message, targetStateBeforeReply, isRealistic);
+  
+  if (initialDelay > 4000) {
+    setStatus(targetStateBeforeReply);
+    removeAllTypingIndicators();
+  } else {
+    setStatus("typing...");
+    removeAllTypingIndicators();
+    activeTypingIndicator = appendTypingIndicator();
+    scrollToLatest();
+  }
+
   const requestId = activeRequestId + 1;
   const requestStartedAt = performance.now();
   activeRequestId = requestId;
-  removeAllTypingIndicators();
-  activeTypingIndicator = appendTypingIndicator();
-  scrollToLatest();
 
   try {
     const response = await fetch("/api/chat", {
@@ -122,6 +362,8 @@ async function handleSubmit(event) {
         message,
         adultConfirmed: isAgeConfirmed,
         history: getRecentHistory(),
+        isReturning,
+        wasSleeping
       }),
     });
 
@@ -136,33 +378,69 @@ async function handleSubmit(event) {
     }
 
     const reply = data.reply || "Mm, I missed that. Try sending it again.";
-    const delay = calculateHumanTypingDelay(reply);
+    const parts = splitResponse(reply);
+
+    // Wait out the rest of the initial delay if needed
     const elapsed = performance.now() - requestStartedAt;
-    
-    let remainingDelay;
-    if (elapsed > delay) {
-      remainingDelay = randomRange(800, 1600);
+    let remainingDelay = initialDelay - elapsed;
+    if (remainingDelay < 300) {
+      remainingDelay = randomRange(300, 700);
+    }
+
+    if (initialDelay > 4000) {
+      if (remainingDelay > 3500) {
+        await sleep(remainingDelay - 3500);
+        if (requestId !== activeRequestId) return;
+        setStatus("typing...");
+        removeAllTypingIndicators();
+        activeTypingIndicator = appendTypingIndicator();
+        scrollToLatest();
+        await sleep(3500);
+      } else {
+        setStatus("typing...");
+        removeAllTypingIndicators();
+        activeTypingIndicator = appendTypingIndicator();
+        scrollToLatest();
+        await sleep(remainingDelay);
+      }
     } else {
-      remainingDelay = delay - elapsed;
+      await sleep(remainingDelay);
     }
-
-    if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
-      console.debug("Typing delay", {
-        wordCount: reply.split(/\s+/).filter(Boolean).length,
-        calculatedDelay: delay,
-        apiElapsed: elapsed,
-        remainingDelay
-      });
-    }
-
-    await waitForTypingDelay(remainingDelay);
 
     if (requestId !== activeRequestId) {
       return;
     }
 
+    // Display first part
+    removeAllTypingIndicators();
+    appendMessage("received", parts[0]);
+
+    // Handle remaining split parts
+    for (let i = 1; i < parts.length; i++) {
+      const part = parts[i];
+      const splitDelay = randomRange(800, 2000);
+      
+      setStatus("typing...");
+      removeAllTypingIndicators();
+      activeTypingIndicator = appendTypingIndicator();
+      scrollToLatest();
+      
+      await sleep(splitDelay);
+      
+      if (requestId !== activeRequestId) {
+        return;
+      }
+      
+      removeAllTypingIndicators();
+      appendMessage("received", part);
+    }
+
+    // Transition back to online if she was away/busy and responded
+    if (isRealistic && (targetStateBeforeReply === "away" || targetStateBeforeReply === "busy")) {
+      setPresenceState("online", 15 * 60 * 1000);
+    }
+
     clearPendingResponse({ invalidateRequest: false });
-    appendMessage("received", reply);
   } catch (error) {
     if (requestId !== activeRequestId) {
       return;
@@ -174,6 +452,8 @@ async function handleSubmit(event) {
   } finally {
     if (requestId === activeRequestId) {
       setWaiting(false);
+      setStatus(currentPresenceState);
+      resetInactivityTimer();
       messageInput.focus();
       scrollToLatest();
     }
@@ -189,12 +469,15 @@ function resetChat() {
   appendPrivacyNote();
   appendDateSeparator("Today");
 
-  INITIAL_MESSAGES.forEach((message) => {
-    appendMessage(message.role, message.text);
-  });
+  const opener = getRandomOpener();
+  appendMessage("received", opener);
 
   clearComposer();
   setWaiting(false);
+  
+  updatePresenceState();
+  resetInactivityTimer();
+  
   scrollToLatest();
 }
 
@@ -371,44 +654,22 @@ function randomRange(min, max) {
 
 function calculateHumanTypingDelay(text) {
   const trimmedText = typeof text === "string" ? text.trim() : "";
-
   if (!trimmedText) {
-    return 3500;
+    return randomRange(500, 900);
   }
 
-  const words = trimmedText.split(/\s+/).filter(Boolean);
-  const wordCount = words.length;
+  // 0.04 - 0.06 seconds per character is 40 - 60 ms per character
+  const msPerChar = randomRange(40, 60);
+  let delay = trimmedText.length * msPerChar;
 
-  const baseDelay = randomRange(1800, 3200);
-
-  let wordDelay = 0;
-  for (let i = 0; i < wordCount; i++) {
-    wordDelay += randomRange(380, 620);
+  // Very short replies (less than 15 chars) have a small delay around 500-900ms
+  if (trimmedText.length < 15) {
+    delay = Math.max(delay, randomRange(500, 900));
   }
 
-  const commaMatches = trimmedText.match(/[,;:]/g) || [];
-  let commaDelay = 0;
-  for (let i = 0; i < commaMatches.length; i++) {
-    commaDelay += randomRange(250, 450);
-  }
-
-  const sentenceMatches = trimmedText.match(/[.!?]/g) || [];
-  let sentenceDelay = 0;
-  for (let i = 0; i < sentenceMatches.length; i++) {
-    sentenceDelay += randomRange(450, 850);
-  }
-
-  const finalPause = randomRange(600, 1400);
-
-  const scalingFactor = Math.max(0.33, 0.9 / Math.sqrt(wordCount));
-
-  const totalDelay = baseDelay + (wordDelay + commaDelay + sentenceDelay) * scalingFactor + finalPause;
-
-  return clamp(Math.round(totalDelay), 3500, 22000);
-}
-
-function clamp(value, min, max) {
-  return Math.min(Math.max(value, min), max);
+  // Cap normal delays around 4-6 seconds
+  const cap = randomRange(4000, 6000);
+  return Math.min(delay, cap);
 }
 
 function clearComposer() {
@@ -517,5 +778,157 @@ function setSidebarCollapsed(collapsed) {
       sidebarToggle.setAttribute("aria-label", "Hide sidebar");
       sidebarToggle.setAttribute("aria-expanded", "true");
     }
+  }
+}
+
+// --- Maya Presence & Human Pacing Helpers ---
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function calculateReplyDelay(userMessage, state, isRealistic) {
+  let baseDelay = randomRange(1500, 4000);
+  const len = userMessage.length;
+  if (len < 15) {
+    baseDelay = randomRange(700, 1500);
+  } else if (len > 120) {
+    baseDelay = randomRange(3000, 6000);
+  }
+
+  if (!isRealistic) {
+    return baseDelay;
+  }
+
+  if (state === "away") {
+    if (Math.random() < 0.3) {
+      return randomRange(8000, 30000);
+    }
+  } else if (state === "busy") {
+    if (Math.random() < 0.5) {
+      return randomRange(10000, 30000);
+    }
+  } else if (state === "sleeping") {
+    return randomRange(12000, 30000);
+  }
+
+  return baseDelay;
+}
+
+function updatePresenceState() {
+  const isRealistic = localStorage.getItem("mayaRealisticAvailability") !== "false";
+  if (!isRealistic) {
+    currentPresenceState = "online";
+    sessionStorage.removeItem("mayaPresenceState");
+    sessionStorage.removeItem("mayaPresenceStateExpires");
+    setStatus("online");
+    return;
+  }
+
+  const now = Date.now();
+  const savedState = sessionStorage.getItem("mayaPresenceState");
+  const savedExpires = sessionStorage.getItem("mayaPresenceStateExpires");
+
+  if (savedState && savedExpires && now < parseInt(savedExpires, 10)) {
+    currentPresenceState = savedState;
+    setStatus(currentPresenceState);
+    return;
+  }
+
+  const hour = new Date().getHours();
+  let newState = "online";
+  let durationMinutes = 30;
+
+  if (hour >= 2 && hour < 7) {
+    const roll = Math.random();
+    if (roll < 0.8) {
+      newState = "sleeping";
+      durationMinutes = randomRange(60, 180);
+    } else if (roll < 0.95) {
+      newState = "away";
+      durationMinutes = randomRange(15, 45);
+    } else {
+      newState = "online";
+      durationMinutes = randomRange(10, 30);
+    }
+  } else if (hour >= 23 || hour < 2) {
+    const roll = Math.random();
+    if (roll < 0.4) {
+      newState = "sleeping";
+      durationMinutes = randomRange(60, 120);
+    } else if (roll < 0.8) {
+      newState = "away";
+      durationMinutes = randomRange(15, 45);
+    } else {
+      newState = "online";
+      durationMinutes = randomRange(15, 30);
+    }
+  } else {
+    const roll = Math.random();
+    if (roll < 0.75) {
+      newState = "online";
+      durationMinutes = randomRange(20, 45);
+    } else if (roll < 0.95) {
+      newState = "away";
+      durationMinutes = randomRange(10, 30);
+    } else {
+      newState = "busy";
+      durationMinutes = randomRange(10, 20);
+    }
+  }
+
+  setPresenceState(newState, durationMinutes * 60 * 1000);
+}
+
+function setPresenceState(state, durationMs) {
+  const oldState = currentPresenceState;
+  currentPresenceState = state;
+  sessionStorage.setItem("mayaPresenceState", state);
+  sessionStorage.setItem("mayaPresenceStateExpires", (Date.now() + durationMs).toString());
+  
+  if (oldState === "sleeping" && state !== "sleeping") {
+    sleepingMessageCount = 0;
+  }
+  
+  setStatus(state);
+}
+
+function initializeSettings() {
+  const toggle = document.getElementById("realistic-availability-toggle");
+  const stored = localStorage.getItem("mayaRealisticAvailability");
+  const isEnabled = stored !== "false";
+  
+  localStorage.setItem("mayaRealisticAvailability", isEnabled ? "true" : "false");
+  
+  if (toggle) {
+    toggle.checked = isEnabled;
+    toggle.addEventListener("change", (e) => {
+      localStorage.setItem("mayaRealisticAvailability", e.target.checked ? "true" : "false");
+      updatePresenceState();
+    });
+  }
+
+  const settingsBtn = document.getElementById("settings-btn");
+  const settingsModal = document.getElementById("settings-modal");
+  const settingsCloseBtn = document.getElementById("settings-close-btn");
+
+  if (settingsBtn && settingsModal) {
+    settingsBtn.addEventListener("click", () => {
+      settingsModal.classList.remove("hidden");
+    });
+  }
+
+  if (settingsCloseBtn && settingsModal) {
+    settingsCloseBtn.addEventListener("click", () => {
+      settingsModal.classList.add("hidden");
+    });
+  }
+
+  if (settingsModal) {
+    settingsModal.addEventListener("click", (e) => {
+      if (e.target === settingsModal) {
+        settingsModal.classList.add("hidden");
+      }
+    });
   }
 }
