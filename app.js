@@ -487,7 +487,6 @@ function cleanupOldStorage() {
     console.warn("Storage cleanup failed:", e);
   }
 }
-
 function initializeSidebarState() {
   const isMobile = window.innerWidth <= 840;
   const stored = localStorage.getItem("mayaSidebarCollapsed");
