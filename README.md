@@ -25,12 +25,18 @@ ChatBot in the Sky is a polished, lightweight, and modern AI chat application de
 
 ```
 .
+├── config/
+│   ├── communication-style.json
+│   ├── model-info.json
+│   └── model-purpose.json
 ├── assets/
 │   ├── favicon.svg
 │   └── logo.svg
 ├── functions/
-│   └── api/
-│       └── chat.js
+│   ├── api/
+│   │   └── chat.js
+│   └── lib/
+│       └── chat-config.js
 ├── app.js
 ├── index.html
 ├── styles.css
@@ -41,6 +47,17 @@ ChatBot in the Sky is a polished, lightweight, and modern AI chat application de
 ├── .env.example
 └── .gitignore
 ```
+
+## Chatbot configuration
+
+The chatbot behavior is split across three files:
+
+- [config/model-info.json](file:///home/k9-vortex/Development/1-JavaScript_TypeScript/22-ChatBot%20in%20the%20Cloud/config/model-info.json) — app name, assistant name, provider/model metadata
+- [config/model-purpose.json](file:///home/k9-vortex/Development/1-JavaScript_TypeScript/22-ChatBot%20in%20the%20Cloud/config/model-purpose.json) — what the chatbot is designed to help with
+- [config/communication-style.json](file:///home/k9-vortex/Development/1-JavaScript_TypeScript/22-ChatBot%20in%20the%20Cloud/config/communication-style.json) — tone, response style, and safety boundaries
+
+This keeps the app cleaner and easier to maintain.
+
 
 ## Local Development & Setup
 
