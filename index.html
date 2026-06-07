@@ -13,7 +13,7 @@
 <body>
   <div id="age-gate" class="age-gate" role="dialog" aria-modal="true" aria-labelledby="age-gate-title">
     <div class="age-gate-box">
-      <div class="age-gate-avatar" aria-hidden="true">M</div>
+      <div class="age-gate-avatar" aria-hidden="true">18+</div>
       <h2 id="age-gate-title">Maya After Dark</h2>
       <p class="age-gate-subtitle">Private companion chat</p>
       <div class="age-gate-terms">
@@ -34,26 +34,40 @@
       <header class="sidebar-header">
         <div class="sidebar-title-row">
           <div class="brand-block">
-            <p class="eyebrow">Private companion</p>
             <h1>Maya After Dark</h1>
           </div>
           <div class="sidebar-actions">
-            <div class="avatar avatar-user" aria-label="Your profile"></div>
             <button class="icon-button" type="button" aria-label="New chat" title="New chat">
               <svg aria-hidden="true" viewBox="0 0 24 24">
-                <path d="M12 5v14M5 12h14"></path>
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              </svg>
+            </button>
+            <button class="icon-button" type="button" aria-label="Settings" title="Settings">
+              <svg aria-hidden="true" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
               </svg>
             </button>
           </div>
         </div>
-        <label class="search-field">
-          <svg aria-hidden="true" viewBox="0 0 24 24">
-            <circle cx="11" cy="11" r="7"></circle>
-            <path d="m16.5 16.5 4 4"></path>
-          </svg>
-          <input type="search" placeholder="Search sweet notes or start fresh" aria-label="Search conversations">
-        </label>
-        <p class="sidebar-note">18+ only. Consent-first. Say stop or slow down at any time.</p>
+
+        <div class="companion-profile-card">
+          <div class="companion-profile-info">
+            <span class="companion-profile-title">Private Companion</span>
+            <span class="badge-18">18+</span>
+          </div>
+          <p class="companion-profile-consent">Consent-first. You’re in control.</p>
+        </div>
+
+        <div class="search-container">
+          <label class="search-field">
+            <svg aria-hidden="true" viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="7"></circle>
+              <path d="m16.5 16.5 4 4"></path>
+            </svg>
+            <input type="search" placeholder="Search or start a new chat" aria-label="Search conversations">
+          </label>
+        </div>
       </header>
 
       <nav class="conversation-list" aria-label="Conversation list">
@@ -66,11 +80,19 @@
             </span>
             <span class="conversation-bottom">
               <span class="status-dot" aria-hidden="true"></span>
-              <span class="conversation-preview">Soft, flirty, and tuned into your pace.</span>
+              <span class="conversation-preview">Hey, I’m Maya. Before we start…</span>
             </span>
           </span>
         </button>
       </nav>
+
+      <footer class="sidebar-footer">
+        <svg aria-hidden="true" viewBox="0 0 24 24" class="lock-icon">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+        <span>All conversations are private and stay on your device.</span>
+      </footer>
     </aside>
 
     <main class="chat-panel" aria-label="Conversation with Maya">
@@ -78,8 +100,13 @@
         <div class="contact-summary">
           <span class="avatar avatar-contact" aria-hidden="true">M</span>
           <span class="contact-text">
-            <span class="contact-name">Maya</span>
-            <span class="contact-status">online now • warm, playful, consent-first</span>
+            <span class="contact-name-row">
+              <span class="contact-name">Maya</span>
+              <svg aria-hidden="true" viewBox="0 0 24 24" class="chevron-down-icon">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </span>
+            <span class="contact-status">online now</span>
           </span>
         </div>
         <div class="chat-actions">
@@ -109,26 +136,42 @@
 
       <footer class="composer">
         <form id="chat-form" class="composer-form">
-          <button class="composer-icon" type="button" aria-label="Mood" title="Mood">
+          <button class="composer-icon" type="button" aria-label="Emojis" title="Emojis">
             <svg aria-hidden="true" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="9"></circle>
+              <circle cx="12" cy="12" r="10"></circle>
               <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
-              <path d="M9 9h.01"></path>
-              <path d="M15 9h.01"></path>
+              <line x1="9" y1="9" x2="9.01" y2="9"></line>
+              <line x1="15" y1="9" x2="15.01" y2="9"></line>
+            </svg>
+          </button>
+          <button class="composer-icon" type="button" aria-label="Attach file" title="Attach">
+            <svg aria-hidden="true" viewBox="0 0 24 24">
+              <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
             </svg>
           </button>
           <label class="message-input-wrap">
             <textarea
               id="message-input"
-              placeholder="Tell Maya what you want more of tonight..."
+              placeholder="Type a message..."
               maxlength="2000"
               rows="1"
-              aria-label="Message Maya"
+              aria-label="Type a message..."
             ></textarea>
             <span id="char-counter" class="char-counter">0 / 2000</span>
           </label>
+          <button class="composer-icon" type="button" aria-label="Voice message" title="Voice message">
+            <svg aria-hidden="true" viewBox="0 0 24 24">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+              <line x1="12" y1="19" x2="12" y2="23"></line>
+              <line x1="8" y1="23" x2="16" y2="23"></line>
+            </svg>
+          </button>
           <button id="send-btn" class="send-button" type="submit" aria-label="Send message">
-            <span>Send</span>
+            <svg aria-hidden="true" viewBox="0 0 24 24" class="send-icon">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
           </button>
         </form>
       </footer>

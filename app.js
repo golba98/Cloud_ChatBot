@@ -116,11 +116,12 @@ async function handleSubmit(event) {
 }
 
 function resetChat() {
-
   hideError();
   conversationHistory = [];
   chatMessages.textContent = "";
-  appendDateSeparator("Tonight");
+  
+  appendPrivacyNote();
+  appendDateSeparator("Today");
 
   INITIAL_MESSAGES.forEach((message) => {
     appendMessage(message.role, message.text);
@@ -143,6 +144,19 @@ function hideAgeGate() {
 
 function showAgeGate() {
   ageGate.classList.remove("hidden");
+}
+
+function appendPrivacyNote() {
+  const note = document.createElement("div");
+  note.className = "chat-privacy-note";
+  note.innerHTML = `
+    <svg aria-hidden="true" viewBox="0 0 24 24" class="lock-icon-small">
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+      <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+    </svg>
+    <span>This is a private conversation. You’re in control.</span>
+  `;
+  chatMessages.appendChild(note);
 }
 
 function appendDateSeparator(label) {
