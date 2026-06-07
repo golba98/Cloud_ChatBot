@@ -77,6 +77,43 @@ svg {
   background: var(--shell-bg);
 }
 
+/* Collapsed state */
+.sidebar-collapsed .sidebar {
+  display: none !important;
+}
+
+/* Sidebar overlay default (hidden on desktop) */
+.sidebar-overlay {
+  display: none !important;
+}
+
+/* Sidebar toggle button styling */
+.sidebar-toggle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.sidebar-toggle:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-soft);
+}
+
+@keyframes overlay-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 /* ─── Left Sidebar ─────────────────────────────── */
 .sidebar {
   width: 380px;
@@ -849,8 +886,35 @@ textarea::placeholder {
 
 /* ─── Responsiveness ────────────────────────────── */
 @media (max-width: 840px) {
+  .sidebar-collapsed .sidebar {
+    display: none !important;
+  }
+
   .sidebar {
-    display: none;
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 50;
+    width: 280px;
+    min-width: 280px;
+    box-shadow: 4px 0 15px rgba(0, 0, 0, 0.5);
+    display: flex;
+  }
+
+  .sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 40;
+    display: block;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    animation: overlay-fade-in 150ms ease;
+  }
+
+  .sidebar-collapsed .sidebar-overlay {
+    display: none !important;
   }
 
   .chat-header {
