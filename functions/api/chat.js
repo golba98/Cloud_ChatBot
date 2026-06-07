@@ -1,4 +1,7 @@
-const MODEL = "@cf/meta/llama-3.1-8b-instruct-fast";
+const MAYA_MODEL = "google/gemma-4-12b-qat";
+const DEFAULT_TEMP = 0.8;
+const DEFAULT_TOP_P = 0.9;
+const DEFAULT_MAX_TOKENS = 150;
 const MAX_MESSAGE_LENGTH = 2000;
 const MAX_HISTORY_MESSAGES = 10;
 
@@ -77,7 +80,10 @@ export async function onRequestPost(context) {
   try {
     const { request } = context;
 
-    if (!context.env.AI) {
+    const provider = (context.env.MODEL_PROVIDER || "cloudflare").toLowerCase();
+    const modelName = context.env.MODEL_NAME || MAYA_MODEL;
+
+    if (provider === "cloudflare" && !context.env.AI) {
       return json(
         { error: "Message failed to send. Please try again later." },
         500
@@ -129,26 +135,141 @@ export async function onRequestPost(context) {
       }
     }
 
-    const result = await context.env.AI.run(MODEL, {
-      messages: [
-        {
-          role: "system",
-          content: systemPromptContent
-        },
-        ...history,
-        {
-          role: "user",
-          content: buildUserMessage(trimmedMessage, adultConfirmed)
-        }
-      ]
-    });
+    // Configured parameters
+    const temperature = context.env.MODEL_TEMP ? parseFloat(context.env.MODEL_TEMP) : DEFAULT_TEMP;
+    const top_p = context.env.MODEL_TOP_P ? parseFloat(context.env.MODEL_TOP_P) : DEFAULT_TOP_P;
+    const max_tokens = context.env.MODEL_MAX_TOKENS ? parseInt(context.env.MODEL_MAX_TOKENS, 10) : DEFAULT_MAX_TOKENS;
 
-    const reply =
-      result?.response ||
-      result?.result?.response ||
-      result?.output_text ||
-      result?.text ||
-      "Sorry, I could not reply right now.";
+    let reply = "";
+
+    if (provider === "openai") {
+      const baseUrl = context.env.OPENAI_BASE_URL || "http://127.0.0.1:1234/v1";
+      const apiKey = context.env.OPENAI_API_KEY || "lm-studio";
+
+      try {
+        const response = await fetch(`${baseUrl}/chat/completions`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiKey}`
+          },
+          body: JSON.stringify({
+            model: modelName,
+            messages: [
+              { role: "system", content: systemPromptContent },
+              ...history,
+              { role: "user", content: buildUserMessage(trimmedMessage, adultConfirmed) }
+            ],
+            temperature: temperature,
+            top_p: top_p,
+            max_tokens: max_tokens
+          })
+        });
+
+        if (!response.ok) {
+          const errorBody = await response.text().catch(() => "");
+          throw new Error(`OpenAI API status ${response.status}: ${errorBody}`);
+        }
+
+        const data = await response.json();
+        reply = data?.choices?.[0]?.message?.content || "";
+        if (!reply) {
+          throw new Error("Empty response received from OpenAI-compatible provider.");
+        }
+      } catch (err) {
+        console.error("OpenAI/LM Studio request failed:", err);
+        return json({
+          error: "Maya isn’t available right now.",
+          consoleError: `Model ${modelName} is not available. Open LM Studio, download/load the model, and start the local server. (Details: ${err.message})`
+        }, 503);
+      }
+    } else if (provider === "ollama") {
+      const baseUrl = context.env.OLLAMA_BASE_URL || "http://127.0.0.1:11434";
+      // Fallback model name for Ollama if using default QAT model
+      const ollamaModel = modelName === MAYA_MODEL ? "gemma4:12b-it-qat" : modelName;
+
+      try {
+        const response = await fetch(`${baseUrl}/api/chat`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            model: ollamaModel,
+            messages: [
+              { role: "system", content: systemPromptContent },
+              ...history,
+              { role: "user", content: buildUserMessage(trimmedMessage, adultConfirmed) }
+            ],
+            stream: false,
+            options: {
+              temperature: temperature,
+              top_p: top_p,
+              num_predict: max_tokens
+            }
+          })
+        });
+
+        if (!response.ok) {
+          const errorBody = await response.text().catch(() => "");
+          throw new Error(`Ollama API status ${response.status}: ${errorBody}`);
+        }
+
+        const data = await response.json();
+        reply = data?.message?.content || "";
+        if (!reply) {
+          throw new Error("Empty response received from Ollama provider.");
+        }
+      } catch (err) {
+        console.error("Ollama request failed:", err);
+        return json({
+          error: "Maya isn’t available right now.",
+          consoleError: `Model ${ollamaModel} is not available. Ensure Ollama is running, pull the model (ollama run ${ollamaModel}), and try again. (Details: ${err.message})`
+        }, 503);
+      }
+    } else if (provider === "cloudflare") {
+      // TODO: Cloudflare Workers AI is a hosted provider that does not natively support the exact model ID "google/gemma-4-12b-qat".
+      // If using the cloudflare provider with the default model, we fall back to "@cf/meta/llama-3.1-8b-instruct-fast" to prevent breaking the app.
+      let activeModel = modelName;
+      if (activeModel === MAYA_MODEL) {
+        activeModel = "@cf/meta/llama-3.1-8b-instruct-fast";
+      }
+
+      try {
+        const result = await context.env.AI.run(activeModel, {
+          messages: [
+            { role: "system", content: systemPromptContent },
+            ...history,
+            { role: "user", content: buildUserMessage(trimmedMessage, adultConfirmed) }
+          ],
+          max_tokens: max_tokens,
+          temperature: temperature,
+          top_p: top_p
+        });
+
+        reply =
+          result?.response ||
+          result?.result?.response ||
+          result?.output_text ||
+          result?.text ||
+          "";
+
+        if (!reply) {
+          throw new Error("Empty response received from Cloudflare Workers AI.");
+        }
+      } catch (err) {
+        console.error("Cloudflare Workers AI request failed:", err);
+        return json({
+          error: "Maya isn’t available right now.",
+          consoleError: `Cloudflare Workers AI request failed. (Details: ${err.message})`
+        }, 503);
+      }
+    } else {
+      return json({
+        error: "Maya isn’t available right now.",
+        consoleError: `Unsupported MODEL_PROVIDER: ${provider}`
+      }, 400);
+    }
 
     const styledReply = applyNaturalImperfections(reply);
 

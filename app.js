@@ -413,6 +413,9 @@ async function handleSubmit(event) {
     }
 
     if (!response.ok) {
+      if (data.consoleError) {
+        console.error(data.consoleError);
+      }
       throw new Error(data.error || "Message could not be sent.");
     }
 
@@ -487,7 +490,7 @@ async function handleSubmit(event) {
 
     clearPendingResponse({ invalidateRequest: false });
     console.error("Message request failed:", error);
-    showError("Message could not be sent. Please try again.");
+    showError(error.message || "Message could not be sent. Please try again.");
   } finally {
     if (requestId === activeRequestId) {
       setWaiting(false);
