@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="100%" height="100%">
+  <defs>
+    <linearGradient id="fav-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ff3b70" />
+      <stop offset="50%" stop-color="#b5179e" />
+      <stop offset="100%" stop-color="#7209b7" />
+    </linearGradient>
+  </defs>
+  <!-- Sharp chat bubble without filters for favicon size -->
+  <path d="M16 3C8.82 3 3 8.82 3 16c0 2.8 0.88 5.4 2.38 7.56L3.5 28.5c-.18.45.27.9.72.72l4.94-1.88C11.3 28.42 13.56 29 16 29c7.18 0 13-5.82 13-13S23.18 3 16 3z" fill="url(#fav-grad)"/>
+  <path d="M13 10a6 6 0 1 0 6 6 6 6 0 0 1-6-6z" fill="#ffffff" />
+  <path d="M21.5 11.5c0-.83-.67-1.5-1.5-1.5-.55 0-1.03.3-1.28.74-.25-.44-.73-.74-1.28-.74-.83 0-1.5.67-1.5 1.5 0 1.2 1.5 2.5 2.78 3.5 1.28-1 2.78-2.3 2.78-3.5z" fill="#ff7da0" />
+</svg>

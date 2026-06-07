@@ -1326,3 +1326,101 @@ textarea::placeholder {
   color: var(--text-muted);
   font-style: italic;
 }
+
+/* ─── Brand Logo & Branding ────────────────────── */
+.brand-block {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sidebar-logo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+.avatar-contact {
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-contact .brand-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Age Gate Logo styling */
+.age-gate-logo {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  margin-bottom: 8px;
+  filter: drop-shadow(0 0 20px rgba(255, 59, 112, 0.3));
+}
+
+/* Empty State styling */
+.chat-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  margin: auto;
+  padding: 40px 24px;
+  max-width: 380px;
+  animation: empty-state-fade-in 300ms ease-out;
+}
+
+@keyframes empty-state-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.empty-state-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.empty-state-logo {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 15px rgba(255, 59, 112, 0.25));
+}
+
+.empty-state-title {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  font-weight: 500;
+  color: var(--text);
+  margin: 0;
+  letter-spacing: 0.5px;
+}
+
+.empty-state-subtitle {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 0;
+}
+
+@media (max-width: 767px) {
+  .chat-header .avatar-contact {
+    width: 32px;
+    height: 32px;
+  }
+}
+
