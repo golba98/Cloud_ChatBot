@@ -1,6 +1,7 @@
 # Environment variables
 .env
 .env.*
+!.env.example
 .dev.vars
 
 # Dependencies
@@ -17,8 +18,6 @@ dist/
 build/
 
 # Backups and notes
-AGENTS.md
-CLAUDE.md
 .work-backups/
 
 # OS-specific files
@@ -27,3 +26,4 @@ Thumbs.db
 
 # Claude Code local settings
 .claude/
+
