@@ -74,6 +74,16 @@ async function handleSubmit(event) {
     return;
   }
 
+  if (isBlockedSlashCommand(message)) {
+    clearComposer();
+    if (message.toLowerCase() === "/clear") {
+      showError("Slash commands are disabled. Use the Reset button to clear the chat.");
+    } else {
+      showError("Commands are disabled in chat.");
+    }
+    return;
+  }
+
   if (message.length > MAX_MESSAGE_LENGTH) {
     showError("Message is too long.");
     return;
@@ -437,4 +447,8 @@ function formatTime(date) {
     hour: "2-digit",
     minute: "2-digit",
   }).format(date);
+}
+
+function isBlockedSlashCommand(input) {
+  return input.trim().startsWith("/");
 }
