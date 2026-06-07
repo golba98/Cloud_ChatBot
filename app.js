@@ -1,5 +1,12 @@
 const MAX_MESSAGE_LENGTH = 2000;
 const MAX_HISTORY_MESSAGES = 10;
+const MIN_TYPING_DELAY_MS = 1100;
+const BASE_TYPING_DELAY_MS = 700;
+const PER_WORD_TYPING_DELAY_MS = 135;
+const PER_PUNCTUATION_DELAY_MS = 120;
+const MAX_PUNCTUATION_DELAY_MS = 480;
+const MAX_TYPING_DELAY_MS = 8500;
+const RANDOM_TYPING_JITTER_MS = 180;
 let isAgeConfirmed = false;
 
 const INITIAL_MESSAGES = [
@@ -11,6 +18,10 @@ const INITIAL_MESSAGES = [
 
 let isWaiting = false;
 let conversationHistory = [];
+let activeRequestId = 0;
+let pendingTypingTimeoutId = null;
+let pendingTypingTimeoutResolve = null;
+let activeTypingIndicator = null;
 
 const chatMessages = document.getElementById("chat-messages");
 const chatForm = document.getElementById("chat-form");
@@ -80,7 +91,10 @@ async function handleSubmit(event) {
   clearComposer();
   setWaiting(true);
 
-  const typingIndicator = appendTypingIndicator();
+  const requestId = activeRequestId + 1;
+  const requestStartedAt = performance.now();
+  activeRequestId = requestId;
+  activeTypingIndicator = appendTypingIndicator();
   scrollToLatest();
 
   try {
@@ -97,25 +111,47 @@ async function handleSubmit(event) {
     });
 
     const data = await response.json().catch(() => ({}));
-    removeElement(typingIndicator);
+
+    if (requestId !== activeRequestId) {
+      return;
+    }
 
     if (!response.ok) {
       throw new Error(data.error || "Message could not be sent.");
     }
 
-    appendMessage("received", data.reply || "Mm, I missed that. Try sending it again.");
+    const reply = data.reply || "Mm, I missed that. Try sending it again.";
+    const delay = calculateTypingDelay(reply);
+    const elapsed = performance.now() - requestStartedAt;
+    const remainingDelay = Math.max(0, delay - elapsed);
+
+    await waitForTypingDelay(remainingDelay);
+
+    if (requestId !== activeRequestId) {
+      return;
+    }
+
+    clearPendingResponse({ invalidateRequest: false });
+    appendMessage("received", reply);
   } catch (error) {
-    removeElement(typingIndicator);
+    if (requestId !== activeRequestId) {
+      return;
+    }
+
+    clearPendingResponse({ invalidateRequest: false });
     console.error("Message request failed:", error);
     showError("Message could not be sent. Please try again.");
   } finally {
-    setWaiting(false);
-    messageInput.focus();
-    scrollToLatest();
+    if (requestId === activeRequestId) {
+      setWaiting(false);
+      messageInput.focus();
+      scrollToLatest();
+    }
   }
 }
 
 function resetChat() {
+  clearPendingResponse();
   hideError();
   conversationHistory = [];
   chatMessages.textContent = "";
@@ -199,6 +235,10 @@ function appendTypingIndicator() {
   bubble.className = "bubble typing-bubble";
   bubble.setAttribute("aria-label", "Maya is composing a reply");
 
+  const label = document.createElement("span");
+  label.className = "typing-label";
+  label.textContent = "Maya is typing";
+
   const dots = document.createElement("span");
   dots.className = "typing-dots";
   dots.setAttribute("aria-hidden", "true");
@@ -207,6 +247,7 @@ function appendTypingIndicator() {
     dots.appendChild(document.createElement("span"));
   }
 
+  bubble.appendChild(label);
   bubble.appendChild(dots);
   message.appendChild(bubble);
   chatMessages.appendChild(message);
@@ -244,6 +285,71 @@ function removeElement(element) {
 function setWaiting(waiting) {
   isWaiting = waiting;
   sendBtn.disabled = waiting;
+  messageInput.readOnly = waiting;
+}
+
+function clearPendingResponse({ invalidateRequest = true } = {}) {
+  if (pendingTypingTimeoutId !== null) {
+    clearTimeout(pendingTypingTimeoutId);
+    pendingTypingTimeoutId = null;
+  }
+
+  if (pendingTypingTimeoutResolve) {
+    const resolve = pendingTypingTimeoutResolve;
+    pendingTypingTimeoutResolve = null;
+    resolve();
+  }
+
+  if (activeTypingIndicator) {
+    removeElement(activeTypingIndicator);
+    activeTypingIndicator = null;
+  }
+
+  if (invalidateRequest) {
+    activeRequestId += 1;
+  }
+}
+
+function waitForTypingDelay(delayMs) {
+  if (delayMs <= 0) {
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve) => {
+    pendingTypingTimeoutResolve = resolve;
+    pendingTypingTimeoutId = window.setTimeout(() => {
+      pendingTypingTimeoutId = null;
+      pendingTypingTimeoutResolve = null;
+      resolve();
+    }, delayMs);
+  });
+}
+
+function calculateTypingDelay(text) {
+  const trimmedText = typeof text === "string" ? text.trim() : "";
+
+  if (!trimmedText) {
+    return MIN_TYPING_DELAY_MS;
+  }
+
+  const words = trimmedText.split(/\s+/).filter(Boolean).length;
+  const punctuationMatches = trimmedText.match(/[.!?,;:]/g) || [];
+  const punctuationDelay = Math.min(
+    punctuationMatches.length * PER_PUNCTUATION_DELAY_MS,
+    MAX_PUNCTUATION_DELAY_MS
+  );
+  const randomJitter = Math.round((Math.random() * 2 - 1) * RANDOM_TYPING_JITTER_MS);
+  const rawDelay =
+    BASE_TYPING_DELAY_MS +
+    words * PER_WORD_TYPING_DELAY_MS +
+    punctuationDelay +
+    randomJitter;
+
+  return clamp(rawDelay, MIN_TYPING_DELAY_MS, MAX_TYPING_DELAY_MS);
+}
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
 }
 
 function clearComposer() {
