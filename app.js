@@ -1,6 +1,6 @@
 const MAX_MESSAGE_LENGTH = 2000;
 const MAX_HISTORY_MESSAGES = 10;
-const AGE_GATE_KEY = "maya-age-confirmed";
+let isAgeConfirmed = false;
 
 const INITIAL_MESSAGES = [
   {
@@ -22,8 +22,6 @@ const errorContainer = document.getElementById("error-container");
 const errorText = document.getElementById("error-text");
 const closeErrorBtn = document.getElementById("close-error-btn");
 const sidebarTime = document.getElementById("sidebar-time");
-const consentCheckbox = document.getElementById("adult-confirmation");
-const consentHint = document.getElementById("consent-hint");
 const ageGate = document.getElementById("age-gate");
 const ageGateConfirmBtn = document.getElementById("age-gate-confirm");
 
@@ -31,21 +29,13 @@ document.addEventListener("DOMContentLoaded", () => {
   chatForm.addEventListener("submit", handleSubmit);
   messageInput.addEventListener("keydown", handleKeyDown);
   messageInput.addEventListener("input", handleInput);
-  clearBtn.addEventListener("click", () => resetChat(true));
+  clearBtn.addEventListener("click", () => resetChat());
   closeErrorBtn.addEventListener("click", hideError);
-  consentCheckbox.addEventListener("change", handleConsentChange);
   ageGateConfirmBtn.addEventListener("click", confirmAgeGate);
 
   setSidebarTime();
   resetChat();
   updateCharacterCounter();
-
-  if (localStorage.getItem(AGE_GATE_KEY) === "true") {
-    hideAgeGate();
-    consentCheckbox.checked = true;
-    updateConsentHint();
-    messageInput.focus();
-  }
 });
 
 function handleInput() {
@@ -54,10 +44,6 @@ function handleInput() {
   resizeInput();
 }
 
-function handleConsentChange() {
-  hideError();
-  updateConsentHint();
-}
 
 function handleKeyDown(event) {
   if (event.key === "Enter" && !event.shiftKey) {
@@ -75,9 +61,8 @@ async function handleSubmit(event) {
 
   const message = messageInput.value.trim();
 
-  if (!consentCheckbox.checked) {
-    showError("Confirm you are 18+ and want a consensual adult chat before sending.");
-    consentCheckbox.focus();
+  if (!isAgeConfirmed) {
+    showAgeGate();
     return;
   }
 
@@ -106,7 +91,7 @@ async function handleSubmit(event) {
       },
       body: JSON.stringify({
         message,
-        adultConfirmed: consentCheckbox.checked,
+        adultConfirmed: isAgeConfirmed,
         history: getRecentHistory(),
       }),
     });
@@ -130,13 +115,7 @@ async function handleSubmit(event) {
   }
 }
 
-function resetChat(clearGate = false) {
-  if (clearGate) {
-    localStorage.removeItem(AGE_GATE_KEY);
-    consentCheckbox.checked = false;
-    updateConsentHint();
-    showAgeGate();
-  }
+function resetChat() {
 
   hideError();
   conversationHistory = [];
@@ -153,10 +132,8 @@ function resetChat(clearGate = false) {
 }
 
 function confirmAgeGate() {
-  localStorage.setItem(AGE_GATE_KEY, "true");
+  isAgeConfirmed = true;
   hideAgeGate();
-  consentCheckbox.checked = true;
-  updateConsentHint();
   messageInput.focus();
 }
 
@@ -269,11 +246,6 @@ function updateCharacterCounter() {
   charCounter.classList.toggle("limit", length >= MAX_MESSAGE_LENGTH);
 }
 
-function updateConsentHint() {
-  consentHint.textContent = consentCheckbox.checked
-    ? "18+ confirmed. Keep it consensual, and say stop or slow down any time."
-    : "Adult chat stays locked until you confirm you are 18+ and want a consensual conversation.";
-}
 
 function resizeInput() {
   messageInput.style.height = "auto";
