@@ -1,12 +1,5 @@
 const MAX_MESSAGE_LENGTH = 2000;
 const MAX_HISTORY_MESSAGES = 10;
-const MIN_TYPING_DELAY_MS = 1100;
-const BASE_TYPING_DELAY_MS = 700;
-const PER_WORD_TYPING_DELAY_MS = 135;
-const PER_PUNCTUATION_DELAY_MS = 120;
-const MAX_PUNCTUATION_DELAY_MS = 480;
-const MAX_TYPING_DELAY_MS = 8500;
-const RANDOM_TYPING_JITTER_MS = 180;
 let isAgeConfirmed = false;
 
 const INITIAL_MESSAGES = [
@@ -94,6 +87,7 @@ async function handleSubmit(event) {
   const requestId = activeRequestId + 1;
   const requestStartedAt = performance.now();
   activeRequestId = requestId;
+  removeAllTypingIndicators();
   activeTypingIndicator = appendTypingIndicator();
   scrollToLatest();
 
@@ -121,9 +115,24 @@ async function handleSubmit(event) {
     }
 
     const reply = data.reply || "Mm, I missed that. Try sending it again.";
-    const delay = calculateTypingDelay(reply);
+    const delay = calculateHumanTypingDelay(reply);
     const elapsed = performance.now() - requestStartedAt;
-    const remainingDelay = Math.max(0, delay - elapsed);
+    
+    let remainingDelay;
+    if (elapsed > delay) {
+      remainingDelay = randomRange(800, 1600);
+    } else {
+      remainingDelay = delay - elapsed;
+    }
+
+    if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+      console.debug("Typing delay", {
+        wordCount: reply.split(/\s+/).filter(Boolean).length,
+        calculatedDelay: delay,
+        apiElapsed: elapsed,
+        remainingDelay
+      });
+    }
 
     await waitForTypingDelay(remainingDelay);
 
@@ -288,6 +297,19 @@ function setWaiting(waiting) {
   messageInput.readOnly = waiting;
 }
 
+function removeAllTypingIndicators() {
+  const indicators = chatMessages.querySelectorAll(".typing-bubble");
+  indicators.forEach((indicator) => {
+    const messageNode = indicator.closest(".message");
+    if (messageNode) {
+      removeElement(messageNode);
+    } else {
+      removeElement(indicator);
+    }
+  });
+  activeTypingIndicator = null;
+}
+
 function clearPendingResponse({ invalidateRequest = true } = {}) {
   if (pendingTypingTimeoutId !== null) {
     clearTimeout(pendingTypingTimeoutId);
@@ -300,10 +322,7 @@ function clearPendingResponse({ invalidateRequest = true } = {}) {
     resolve();
   }
 
-  if (activeTypingIndicator) {
-    removeElement(activeTypingIndicator);
-    activeTypingIndicator = null;
-  }
+  removeAllTypingIndicators();
 
   if (invalidateRequest) {
     activeRequestId += 1;
@@ -325,27 +344,46 @@ function waitForTypingDelay(delayMs) {
   });
 }
 
-function calculateTypingDelay(text) {
+function randomRange(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function calculateHumanTypingDelay(text) {
   const trimmedText = typeof text === "string" ? text.trim() : "";
 
   if (!trimmedText) {
-    return MIN_TYPING_DELAY_MS;
+    return 3500;
   }
 
-  const words = trimmedText.split(/\s+/).filter(Boolean).length;
-  const punctuationMatches = trimmedText.match(/[.!?,;:]/g) || [];
-  const punctuationDelay = Math.min(
-    punctuationMatches.length * PER_PUNCTUATION_DELAY_MS,
-    MAX_PUNCTUATION_DELAY_MS
-  );
-  const randomJitter = Math.round((Math.random() * 2 - 1) * RANDOM_TYPING_JITTER_MS);
-  const rawDelay =
-    BASE_TYPING_DELAY_MS +
-    words * PER_WORD_TYPING_DELAY_MS +
-    punctuationDelay +
-    randomJitter;
+  const words = trimmedText.split(/\s+/).filter(Boolean);
+  const wordCount = words.length;
 
-  return clamp(rawDelay, MIN_TYPING_DELAY_MS, MAX_TYPING_DELAY_MS);
+  const baseDelay = randomRange(1800, 3200);
+
+  let wordDelay = 0;
+  for (let i = 0; i < wordCount; i++) {
+    wordDelay += randomRange(380, 620);
+  }
+
+  const commaMatches = trimmedText.match(/[,;:]/g) || [];
+  let commaDelay = 0;
+  for (let i = 0; i < commaMatches.length; i++) {
+    commaDelay += randomRange(250, 450);
+  }
+
+  const sentenceMatches = trimmedText.match(/[.!?]/g) || [];
+  let sentenceDelay = 0;
+  for (let i = 0; i < sentenceMatches.length; i++) {
+    sentenceDelay += randomRange(450, 850);
+  }
+
+  const finalPause = randomRange(600, 1400);
+
+  const scalingFactor = Math.max(0.33, 0.9 / Math.sqrt(wordCount));
+
+  const totalDelay = baseDelay + (wordDelay + commaDelay + sentenceDelay) * scalingFactor + finalPause;
+
+  return clamp(Math.round(totalDelay), 3500, 22000);
 }
 
 function clamp(value, min, max) {
