@@ -23,15 +23,30 @@ const closeErrorBtn = document.getElementById("close-error-btn");
 const sidebarTime = document.getElementById("sidebar-time");
 const ageGate = document.getElementById("age-gate");
 const ageGateConfirmBtn = document.getElementById("age-gate-confirm");
+const sidebarToggle = document.getElementById("sidebar-toggle");
+const sidebarOverlay = document.getElementById("sidebar-overlay");
+const appShell = document.querySelector(".app-shell");
 
 document.addEventListener("DOMContentLoaded", () => {
   chatForm.addEventListener("submit", handleSubmit);
   messageInput.addEventListener("keydown", handleKeyDown);
   messageInput.addEventListener("input", handleInput);
-  clearBtn.addEventListener("click", () => resetChat());
+  if (clearBtn) {
+    clearBtn.addEventListener("click", () => resetChat());
+  }
   closeErrorBtn.addEventListener("click", hideError);
   ageGateConfirmBtn.addEventListener("click", confirmAgeGate);
 
+  if (sidebarToggle) {
+    sidebarToggle.addEventListener("click", toggleSidebar);
+  }
+  if (sidebarOverlay) {
+    sidebarOverlay.addEventListener("click", () => {
+      setSidebarCollapsed(true);
+    });
+  }
+
+  initializeSidebarState();
   setSidebarTime();
   cleanupOldStorage();
   resetChat();
@@ -470,5 +485,37 @@ function cleanupOldStorage() {
     });
   } catch (e) {
     console.warn("Storage cleanup failed:", e);
+  }
+}
+function initializeSidebarState() {
+  const isMobile = window.innerWidth <= 840;
+  const stored = localStorage.getItem("mayaSidebarCollapsed");
+  const isCollapsed = stored === "true" || (stored === null && isMobile);
+  
+  setSidebarCollapsed(isCollapsed);
+}
+
+function toggleSidebar() {
+  if (!appShell) return;
+  const isCollapsed = appShell.classList.contains("sidebar-collapsed");
+  setSidebarCollapsed(!isCollapsed);
+}
+
+function setSidebarCollapsed(collapsed) {
+  if (!appShell) return;
+  if (collapsed) {
+    appShell.classList.add("sidebar-collapsed");
+    localStorage.setItem("mayaSidebarCollapsed", "true");
+    if (sidebarToggle) {
+      sidebarToggle.setAttribute("aria-label", "Show sidebar");
+      sidebarToggle.setAttribute("aria-expanded", "false");
+    }
+  } else {
+    appShell.classList.remove("sidebar-collapsed");
+    localStorage.setItem("mayaSidebarCollapsed", "false");
+    if (sidebarToggle) {
+      sidebarToggle.setAttribute("aria-label", "Hide sidebar");
+      sidebarToggle.setAttribute("aria-expanded", "true");
+    }
   }
 }
