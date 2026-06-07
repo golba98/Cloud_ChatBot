@@ -17,3 +17,6 @@ dist/
 AGENTS.md
 CLAUDE.md
 .work-backups/
+
+# Claude Code local settings
+.claude/
