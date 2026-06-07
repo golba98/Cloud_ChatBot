@@ -1,6 +1,7 @@
 {
   "name": "cloud-chat",
   "version": "1.0.0",
+  "type": "module",
   "description": "Secure Cloud AI Chat Application built with Cloudflare Pages Functions",
   "scripts": {
     "dev": "wrangler pages dev . --ai AI",
