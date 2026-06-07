@@ -2,20 +2,6 @@ const MAX_MESSAGE_LENGTH = 2000;
 const MAX_HISTORY_MESSAGES = 10;
 let isAgeConfirmed = false;
 
-const CASUAL_OPENERS = [
-  "heyy",
-  "oh hi",
-  "there you are",
-  "mm hey you",
-  "took you long enough",
-  "hey stranger",
-  "was wondering when you’d show up",
-  "hi lol"
-];
-
-function getRandomOpener() {
-  return CASUAL_OPENERS[Math.floor(Math.random() * CASUAL_OPENERS.length)];
-}
 
 let isWaiting = false;
 let conversationHistory = [];
@@ -133,7 +119,7 @@ function updateComposerPlaceholder(status) {
   const wrap = document.querySelector(".message-input-wrap");
   
   if (!isRealistic || status === "online" || status === "typing...") {
-    messageInput.placeholder = "Type a message...";
+    messageInput.placeholder = "Message Maya...";
     if (wrap) wrap.classList.remove("unavailable");
   } else if (status === "away") {
     messageInput.placeholder = "Maya is away right now...";
@@ -468,9 +454,6 @@ function resetChat() {
   
   appendPrivacyNote();
   appendDateSeparator("Today");
-
-  const opener = getRandomOpener();
-  appendMessage("received", opener);
 
   clearComposer();
   setWaiting(false);
