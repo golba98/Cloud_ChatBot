@@ -1,5 +1,7 @@
 # ChatBot in the Sky — Friendly AI Chat Helper
 
+**Live Demo:** [cloud-chatbot.pages.dev](https://cloud-chatbot.pages.dev)
+
 ChatBot in the Sky is a polished, lightweight, and modern AI chat application designed to be deployed on Cloudflare Pages. It serves as a friendly and casual assistant that you can "yap" to, vent to, study with, brainstorm ideas, or ask general questions.
 
 ## Features
