@@ -39,6 +39,10 @@ const ageGateConfirmBtn = document.getElementById("age-gate-confirm");
 const sidebarToggle = document.getElementById("sidebar-toggle");
 const sidebarOverlay = document.getElementById("sidebar-overlay");
 const appShell = document.querySelector(".app-shell");
+const moreOptionsBtn = document.getElementById("more-options-btn");
+const moreOptionsDropdown = document.getElementById("more-options-dropdown");
+const dropdownSettingsBtn = document.getElementById("dropdown-settings-btn");
+const dropdownClearBtn = document.getElementById("dropdown-clear-btn");
 
 document.addEventListener("DOMContentLoaded", () => {
   chatForm.addEventListener("submit", handleSubmit);
@@ -57,6 +61,56 @@ document.addEventListener("DOMContentLoaded", () => {
     sidebarOverlay.addEventListener("click", () => {
       setSidebarCollapsed(true);
     });
+  }
+
+  // Options dropdown menu listeners
+  if (moreOptionsBtn && moreOptionsDropdown) {
+    moreOptionsBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      moreOptionsDropdown.classList.toggle("hidden");
+    });
+  }
+
+  document.addEventListener("click", (e) => {
+    if (moreOptionsDropdown && !moreOptionsDropdown.classList.contains("hidden")) {
+      if (!moreOptionsDropdown.contains(e.target) && e.target !== moreOptionsBtn) {
+        moreOptionsDropdown.classList.add("hidden");
+      }
+    }
+  });
+
+  if (dropdownSettingsBtn) {
+    dropdownSettingsBtn.addEventListener("click", () => {
+      const settingsModal = document.getElementById("settings-modal");
+      if (settingsModal) {
+        settingsModal.classList.remove("hidden");
+      }
+      if (moreOptionsDropdown) {
+        moreOptionsDropdown.classList.add("hidden");
+      }
+    });
+  }
+
+  if (dropdownClearBtn) {
+    dropdownClearBtn.addEventListener("click", () => {
+      resetChat();
+      if (moreOptionsDropdown) {
+        moreOptionsDropdown.classList.add("hidden");
+      }
+    });
+  }
+
+  // Keyboard scroll and visual viewport helpers for mobile devices
+  if (messageInput) {
+    messageInput.addEventListener("focus", () => {
+      setTimeout(scrollToLatest, 150);
+      setTimeout(scrollToLatest, 300);
+    });
+  }
+
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", scrollToLatest);
+    window.visualViewport.addEventListener("scroll", scrollToLatest);
   }
 
   // Active status interaction helpers
