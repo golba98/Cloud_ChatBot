@@ -1,109 +1,104 @@
-# Messages
+# Maya After Dark — Private AI Companion Chat
 
-Plain HTML, CSS, and JavaScript messaging demo with a Pages Function at `/api/chat`.
+Maya After Dark is a polished, responsive private AI companion chat application built on Cloudflare Pages. It features a consent-first design with 18+ boundaries, realistic scheduling simulations, and natural typing pacing with optional chat imperfections.
 
-## Install
+## Features
+
+- **Consent-First Design**: Includes clear 18+ boundary settings and consent confirmation.
+- **Simulated Activity Schedules**: Realistic presence indicators showing online, away, or sleeping states based on time and interaction.
+- **Immersive Chat Experience**: Natural typing delay indicators and human-like text imperfections.
+- **Multi-Provider AI Support**: Works out-of-the-box with Cloudflare Workers AI, local Ollama servers, or OpenAI-compatible endpoints (like LM Studio).
+- **Modern Responsive Design**: Sleek, themeable interface optimized for both desktop and mobile devices.
+
+## Project Structure
+
+```
+.
+├── assets/
+│   ├── favicon.svg
+│   └── logo.svg
+├── functions/
+│   └── api/
+│       └── chat.js
+├── app.js
+├── index.html
+├── styles.css
+├── README.md
+├── package.json
+├── package-lock.json
+├── wrangler.toml
+├── .env.example
+└── .gitignore
+```
+
+## Setup & Local Development
+
+### Prerequisites
+
+Ensure you have Node.js installed on your machine.
+
+### Installation
+
+Install the required dependencies:
 
 ```bash
 npm install
 ```
 
-## Run locally
+### Running Locally
+
+To start the local development server using Cloudflare Wrangler:
 
 ```bash
 npm run dev
 ```
 
-The local dev command uses:
-
-```bash
-wrangler pages dev . --ai AI
-```
-
-If the AI binding or local auth fails, run:
+The application will be served locally. If you run into issues with Cloudflare Workers AI bindings or local credentials, log in to your Cloudflare account:
 
 ```bash
 npx wrangler login
 ```
 
-## Deploy
+## Environment Variables
 
-This project uses **Cloudflare Pages Git integration** — pushing to `main` triggers a build automatically. No deploy command is needed.
-
-### Cloudflare Pages dashboard settings
-
-| Setting | Value |
-|---|---|
-| Build command | *(leave empty)* |
-| Build output directory | `.` |
-| Functions directory | `functions` |
-
-> **Do not** set the build command to `npx wrangler deploy`. That command is for Cloudflare Workers, not Pages, and will fail with "Missing entry-point to Worker script or to assets directory."
-
-### AI binding
-
-In the Pages dashboard → Settings → Environment variables, add:
-
-| Type | Variable name |
-|---|---|
-| Workers AI Binding | `AI` |
-
-### Manual deploy
-
-```bash
-npm run deploy:pages
-```
-
-## Model Configuration
-
-This application supports multiple AI model providers: **Cloudflare Workers AI**, **LM Studio**, and **Ollama**.
-
-The active model is configured to use **`google/gemma-4-12b-qat`** by default.
-
-### Configuration Environment Variables
-
-Create or update `.dev.vars` for local development:
+For local development, copy `.env.example` to create `.dev.vars` (which is gitignored) and configure the variables:
 
 | Variable | Description | Default / Example |
 |---|---|---|
 | `MODEL_PROVIDER` | AI provider (`cloudflare`, `openai`, `ollama`) | `cloudflare` |
-| `MODEL_NAME` | Model ID to use | `google/gemma-4-12b-qat` (OpenAI) or `gemma4:12b-it-qat` (Ollama) |
+| `MODEL_NAME` | Model ID to use | `google/gemma-4-12b-qat` |
 | `OPENAI_BASE_URL` | Base URL for OpenAI-compatible server | `http://127.0.0.1:1234/v1` |
 | `OLLAMA_BASE_URL` | Base URL for local Ollama server | `http://127.0.0.1:11434` |
 | `MODEL_TEMP` | Model generation temperature (0.0 to 1.0) | `0.8` |
 | `MODEL_TOP_P` | Model top_p parameter | `0.9` |
 | `MODEL_MAX_TOKENS` | Max tokens per response | `150` |
 
-### Setting Up the Model Locally
+### Setting Up AI Providers
 
-#### Using LM Studio (OpenAI-compatible)
-1. Open **LM Studio**.
-2. Search and download the **`google/gemma-4-12b-qat`** model.
-3. Load the model into memory.
-4. Start the Local Server in LM Studio (defaulting to `http://localhost:1234`).
-5. Configure `.dev.vars` with:
-   ```env
-   MODEL_PROVIDER=openai
-   MODEL_NAME=google/gemma-4-12b-qat
-   ```
+- **Cloudflare Workers AI**: The default provider. It requires an active Cloudflare Workers AI binding named `AI`.
+- **LM Studio (OpenAI-compatible)**: Run LM Studio locally, download the model, load it, start the server, and set `MODEL_PROVIDER=openai`.
+- **Ollama**: Ensure Ollama is running, pull the model (`ollama run gemma4:12b-it-qat`), and set `MODEL_PROVIDER=ollama`.
 
-#### Using Ollama
-1. Make sure Ollama is installed and running.
-2. Pull the model (use the Ollama-compatible name):
-   ```bash
-   ollama run gemma4:12b-it-qat
-   ```
-3. Configure `.dev.vars` with:
-   ```env
-   MODEL_PROVIDER=ollama
-   MODEL_NAME=gemma4:12b-it-qat
-   ```
+## Cloudflare Deployment
 
-#### Using Cloudflare Workers AI
-> [!NOTE]
-> Cloudflare Workers AI does not natively support the exact custom model ID `google/gemma-4-12b-qat`.
-> If `MODEL_PROVIDER=cloudflare` is selected, the application will check the model and automatically fall back to the supported `@cf/meta/llama-3.1-8b-instruct-fast` model to prevent breaking the application silently.
+This project uses **Cloudflare Pages Git integration**. Pushing changes to the `main` branch will automatically trigger a new deployment.
+
+### Cloudflare Pages Settings
+
+- **Build command**: *(leave empty)*
+- **Build output directory**: `.`
+- **Functions directory**: `functions`
+
+> [!IMPORTANT]
+> Do not set the build command to `npx wrangler deploy`. That command is for standalone Workers and will fail on Pages.
+
+Ensure the `AI` Workers AI binding is configured in the Cloudflare Pages settings (Settings → Functions → Compatibility flags / bindings) if using Workers AI.
 
 ## Security
 
-Never put API keys or provider secrets in frontend JavaScript. Browser files are public.
+Never commit API keys or credentials. Frontend scripts are public, and all requests are proxied securely through Serverless Functions.
+
+## License
+
+This project is licensed under the MIT License.
+

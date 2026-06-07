@@ -1,5 +1,7 @@
 # Environment variables
 .env
+.env.*
+!.env.example
 .dev.vars
 
 # Dependencies
@@ -13,10 +15,15 @@ logs/
 .wrangler/
 .cache/
 dist/
+build/
 
-AGENTS.md
-CLAUDE.md
+# Backups and notes
 .work-backups/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
 
 # Claude Code local settings
 .claude/
+

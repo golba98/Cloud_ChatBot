@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "description": "Secure Cloud AI Chat Application built with Cloudflare Pages Functions",
+  "license": "MIT",
   "scripts": {
     "dev": "wrangler pages dev . --ai AI",
     "deploy:pages": "wrangler pages deploy . --project-name cloud-chatbot",
