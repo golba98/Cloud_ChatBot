@@ -1,6 +1,13 @@
-# Messages
+# Maya After Dark — Private AI Companion Chat
 
-Plain HTML, CSS, and JavaScript messaging demo with a Pages Function at `/api/chat`.
+A polished, responsive private AI companion chat application built with **Cloudflare Pages Functions**. It features a consent-first design with 18+ boundaries, realistic schedules (online/away/sleeping), and human-like typing pacing.
+
+## Tech Stack
+
+- **Frontend:** Pure HTML5, Vanilla CSS, and Modern Vanilla JavaScript.
+- **Serverless Backend:** Cloudflare Pages Functions.
+- **AI Integration:** Cloudflare Workers AI (default), OpenAI-compatible API servers (such as LM Studio), or local Ollama instances.
+- **Model Support:** Optimized for `google/gemma-4-12b-qat` (with automatic fallback to `@cf/meta/llama-3.1-8b-instruct-fast` on Cloudflare Workers AI).
 
 ## Install
 
@@ -107,3 +114,7 @@ Create or update `.dev.vars` for local development:
 ## Security
 
 Never put API keys or provider secrets in frontend JavaScript. Browser files are public.
+
+## License
+
+This project is licensed under the MIT License.
