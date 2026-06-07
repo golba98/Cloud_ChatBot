@@ -123,13 +123,19 @@
               <path d="m16.5 16.5 4 4"></path>
             </svg>
           </button>
-          <button class="icon-button" type="button" aria-label="More options" title="Menu">
-            <svg aria-hidden="true" viewBox="0 0 24 24">
-              <circle cx="12" cy="5" r="1"></circle>
-              <circle cx="12" cy="12" r="1"></circle>
-              <circle cx="12" cy="19" r="1"></circle>
-            </svg>
-          </button>
+          <div class="dropdown-wrapper">
+            <button id="more-options-btn" class="icon-button" type="button" aria-label="More options" title="Menu">
+              <svg aria-hidden="true" viewBox="0 0 24 24">
+                <circle cx="12" cy="5" r="1"></circle>
+                <circle cx="12" cy="12" r="1"></circle>
+                <circle cx="12" cy="19" r="1"></circle>
+              </svg>
+            </button>
+            <div id="more-options-dropdown" class="dropdown hidden" role="menu" aria-label="More options">
+              <button id="dropdown-settings-btn" type="button" role="menuitem">Settings</button>
+              <button id="dropdown-clear-btn" type="button" role="menuitem">Clear chat</button>
+            </div>
+          </div>
         </div>
       </header>
 

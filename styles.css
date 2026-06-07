@@ -32,6 +32,7 @@
 html,
 body {
   height: 100%;
+  height: 100dvh;
   margin: 0;
   font-family: var(--font-sans);
   background: var(--page-bg);
@@ -39,6 +40,7 @@ body {
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  width: 100%;
 }
 
 button,
@@ -70,8 +72,9 @@ svg {
 
 /* ─── Browser/App Shell ────────────────────────────── */
 .app-shell {
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
   display: flex;
   overflow: hidden;
   background: var(--shell-bg);
@@ -390,6 +393,7 @@ svg {
   align-items: center;
   justify-content: space-between;
   padding: 10px 16px;
+  padding-top: calc(10px + env(safe-area-inset-top, 0px));
   background: var(--panel-top);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
@@ -646,8 +650,67 @@ textarea::-webkit-scrollbar-thumb {
 .composer {
   flex-shrink: 0;
   background: var(--composer-bg);
-  padding: 10px 16px 14px;
+  padding: 10px 16px;
+  padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid var(--border);
+}
+
+/* Dropdown actions menu styling */
+.dropdown-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown {
+  position: absolute;
+  top: 48px;
+  right: 0;
+  background: var(--sidebar-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  padding: 6px 0;
+  min-width: 140px;
+  animation: dropdown-fade-in 150ms ease;
+}
+
+@keyframes dropdown-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown button {
+  padding: 12px 16px;
+  width: 100%;
+  text-align: left;
+  justify-content: flex-start;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-soft);
+  background: transparent;
+  border-radius: 0;
+  border: none;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.dropdown button:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--accent);
+}
+
+.dropdown button:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .composer-form {
@@ -901,7 +964,7 @@ textarea::placeholder {
 }
 
 /* ─── Responsiveness ────────────────────────────── */
-@media (max-width: 840px) {
+@media (max-width: 1023px) {
   .sidebar-collapsed .sidebar {
     display: none !important;
   }
@@ -955,6 +1018,151 @@ textarea::placeholder {
   }
 }
 
+@media (max-width: 767px) {
+  /* Hide sidebar and toggle completely on mobile */
+  .sidebar {
+    display: none !important;
+  }
+  .sidebar-overlay {
+    display: none !important;
+  }
+  .sidebar-toggle {
+    display: none !important;
+  }
+
+  /* Full screen chat panel on mobile */
+  .chat-panel {
+    width: 100%;
+    max-width: 100%;
+    flex: 1;
+  }
+
+  /* Adjust header padding and layout */
+  .chat-header {
+    padding-left: 16px;
+    padding-right: 16px;
+    min-height: 56px;
+  }
+
+  /* Touch targets for headers */
+  .chat-actions .icon-button {
+    width: 44px;
+    height: 44px;
+  }
+
+  /* Message spacing and sizing */
+  .message-list {
+    padding: 12px 14px;
+  }
+  
+  .message {
+    max-width: 82%;
+    margin-bottom: 8px;
+  }
+
+  .bubble {
+    padding: 10px 14px 8px;
+    border-radius: 12px;
+  }
+
+  .message.received .bubble {
+    border-top-left-radius: 2px;
+  }
+
+  .message.sent .bubble {
+    border-top-right-radius: 2px;
+  }
+
+  .message-text {
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  .message-meta {
+    margin-top: 4px;
+  }
+
+  /* Composer optimizations */
+  .composer {
+    padding: 8px 12px calc(10px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .composer-form {
+    gap: 8px;
+  }
+
+  /* Hide decorative composer icons to maximize text area space */
+  .composer-icon {
+    display: none !important;
+  }
+
+  /* Expand wrap & buttons for mobile input */
+  .message-input-wrap {
+    padding: 6px 14px;
+    border-radius: 20px;
+    background: var(--field-bg);
+  }
+
+  textarea {
+    font-size: 15px;
+    line-height: 1.4;
+    padding: 6px 0;
+    max-height: 100px;
+  }
+
+  .send-button {
+    width: 44px;
+    height: 44px;
+    display: inline-flex !important; /* Ensure send button is visible */
+  }
+
+  /* Age Gate Mobile adjustments to prevent vertical overflow */
+  .age-gate-box {
+    padding: 20px 16px;
+    gap: 12px;
+    max-height: 85dvh;
+    overflow-y: auto;
+    width: calc(100% - 24px);
+  }
+
+  .age-gate h2 {
+    font-size: 1.35rem;
+  }
+
+  .age-gate-avatar {
+    width: 48px;
+    height: 48px;
+    font-size: 1rem;
+  }
+
+  .age-gate-terms {
+    padding: 12px;
+  }
+
+  .age-gate-terms p {
+    font-size: 0.8rem;
+    margin-bottom: 6px;
+  }
+
+  .age-gate-terms ul {
+    padding-left: 14px;
+  }
+
+  .age-gate-terms li {
+    font-size: 0.75rem;
+    margin-bottom: 2px;
+  }
+
+  .age-gate-btn {
+    padding: 12px;
+    font-size: 0.9rem;
+    min-height: 44px; /* Ensure touch target */
+  }
+
+  .age-gate-footer {
+    font-size: 0.68rem;
+  }
+}
 /* ─── Settings Modal & Sleek Toggle ────────────────── */
 .settings-modal {
   position: fixed;
