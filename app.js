@@ -510,6 +510,7 @@ function resetChat() {
   
   appendPrivacyNote();
   appendDateSeparator("Today");
+  appendEmptyState();
 
   clearComposer();
   setWaiting(false);
@@ -554,7 +555,31 @@ function appendDateSeparator(label) {
   chatMessages.appendChild(separator);
 }
 
+function appendEmptyState() {
+  if (document.getElementById("chat-empty-state")) return;
+  
+  const emptyState = document.createElement("div");
+  emptyState.id = "chat-empty-state";
+  emptyState.className = "chat-empty-state";
+  emptyState.innerHTML = `
+    <div class="empty-state-brand">
+      <img src="assets/logo.svg" alt="Maya After Dark Logo" class="empty-state-logo" />
+      <span class="empty-state-title">Maya After Dark</span>
+    </div>
+    <p class="empty-state-subtitle">Your private AI companion. Tap below to start talking.</p>
+  `;
+  chatMessages.appendChild(emptyState);
+}
+
+function hideEmptyState() {
+  const emptyState = document.getElementById("chat-empty-state");
+  if (emptyState) {
+    emptyState.remove();
+  }
+}
+
 function appendMessage(role, text) {
+  hideEmptyState();
   const message = document.createElement("article");
   message.className = `message ${role}`;
 
